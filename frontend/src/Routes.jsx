@@ -1,0 +1,44 @@
+import React, { Suspense } from 'react';
+import { BrowserRouter, Routes as RouterRoutes, Route, Navigate } from 'react-router-dom';
+import ScrollToTop from './components/ScrollToTop';
+import ErrorBoundary from './components/ErrorBoundary';
+
+// Lazy load components for better performance
+const MainDashboard = React.lazy(() => import('./pages/main-dashboard'));
+const StationDetails = React.lazy(() => import('./pages/station-details'));
+const HistoricalAnalytics = React.lazy(() => import('./pages/historical-analytics'));
+const AlertsManagement = React.lazy(() => import('./pages/alerts-management'));
+const Login = React.lazy(() => import('./pages/login'));
+const Register = React.lazy(() => import('./pages/register'));
+const ImplementationStatus = React.lazy(() => import('./pages/implementation-status'));
+const NotFound = React.lazy(() => import('./pages/NotFound'));
+
+// Loading component for Suspense
+const PageLoader = () => (
+  <div className="min-h-screen bg-background flex items-center justify-center">
+    <div className="flex flex-col items-center space-y-4">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <p className="text-muted-foreground">Loading...</p>
+    </div>
+  </div>
+);
+
+const Routes = () => {
+  return (
+    <BrowserRouter>
+      <ErrorBoundary>
+        <ScrollToTop />
+        <Suspense fallback={<PageLoader />}>
+          <RouterRoutes>
+            {/* Redirect root to dashboard */}
+            <Route path="/" />
+            {/* 404 Not Found */}
+            <Route path="*"  />
+          </RouterRoutes>
+        </Suspense>
+      </ErrorBoundary>
+    </BrowserRouter>
+  );
+};
+
+export default Routes;
