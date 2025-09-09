@@ -33,7 +33,7 @@ const Routes = () => {
             {/* Redirect root to dashboard */}
             <Route path="/" />
             {/* 404 Not Found */}
-            <Route path="*"  />
+            <Route path="*"  element={<NotFound/>}/>
           </RouterRoutes>
         </Suspense>
       </ErrorBoundary>
