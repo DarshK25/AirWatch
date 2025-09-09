@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+pandas
+numpy
+scikit-learn
+joblib
+python-multipart
+geopy
+python-dotenv
+pyjwt
+weasyprint   
