@@ -4,13 +4,8 @@ import ScrollToTop from './components/ScrollToTop';
 import ErrorBoundary from './components/ErrorBoundary';
 
 // Lazy load components for better performance
-const MainDashboard = React.lazy(() => import('./pages/main-dashboard'));
-const StationDetails = React.lazy(() => import('./pages/station-details'));
-const HistoricalAnalytics = React.lazy(() => import('./pages/historical-analytics'));
-const AlertsManagement = React.lazy(() => import('./pages/alerts-management'));
-const Login = React.lazy(() => import('./pages/login'));
-const Register = React.lazy(() => import('./pages/register'));
-const ImplementationStatus = React.lazy(() => import('./pages/implementation-status'));
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const StationDetail = React.lazy(() => import('./pages/StationDetail'));
 const NotFound = React.lazy(() => import('./pages/NotFound'));
 
 // Loading component for Suspense
@@ -30,10 +25,12 @@ const Routes = () => {
         <ScrollToTop />
         <Suspense fallback={<PageLoader />}>
           <RouterRoutes>
-            {/* Redirect root to dashboard */}
-            <Route path="/" />
+            {/* Main Routes */}
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/station/:stationId" element={<StationDetail />} />
+            
             {/* 404 Not Found */}
-            <Route path="*"  element={<NotFound/>}/>
+            <Route path="*" element={<NotFound />} />
           </RouterRoutes>
         </Suspense>
       </ErrorBoundary>
