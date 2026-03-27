@@ -37,6 +37,9 @@ const StationDetails = () => {
 
   const station = enrichedStations.find((s) => String(s.id) === String(stationId));
 
+  // Navigate back
+  const handleBackToDashboard = () => navigate('/dashboard');
+
   // Fetch history when tab or hours changes
   useEffect(() => {
     if (!stationId) return;
@@ -78,9 +81,6 @@ const StationDetails = () => {
       </div>
     );
   }
-
-  // Navigate back
-  const handleBackToDashboard = () => navigate('/dashboard');
 
   const aqiInfo = getAQILevel(station.overall_aqi);
 

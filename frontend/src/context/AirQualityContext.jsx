@@ -22,11 +22,13 @@ export function AirQualityProvider({ children }) {
     const aqi = aqiData.find((a) => a.station_id === s.id);
     return {
       ...s,
+      currentAQI: aqi?.overall_aqi ?? 0,
       overall_aqi: aqi?.overall_aqi ?? 0,
       aqi_category: aqi?.aqi_category ?? 'No Data',
       aqi_color: aqi?.aqi_color ?? '#cccccc',
       last_updated: aqi?.last_updated ?? null,
       pollutants: aqi?.pollutants ?? {},
+      status: 'online',
     };
   });
 

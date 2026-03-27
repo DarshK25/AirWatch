@@ -10,7 +10,7 @@ import NotificationMethodCard from './components/NotificationMethodCard';
 import AlertHistoryCard from './components/AlertHistoryCard';
 import PredictiveAlertSettings from './components/PredictiveAlertSettings';
 import BulkAlertManager from './components/BulkAlertManager';
-import { realDataService } from '../../services/realDataService';
+import realDataService from '../../services/realDataService';
 import { useAirQuality } from '../../context/AirQualityContext';
 
 const AlertsManagement = () => {
@@ -21,14 +21,15 @@ const AlertsManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterSeverity, setFilterSeverity] = useState('all');
   const [filterTimeRange, setFilterTimeRange] = useState('7d');
-    const [stations] = useState([
+  const [stations] = useState([
     { id: 3409469, name: 'Kasarvadavali, Thane' },
     { id: 3409472, name: 'Upvan Fort, Thane' },
     { id: 6943, name: 'Mahape, Navi Mumbai' },
     { id: 3409477, name: 'Kopripada-Vashi, Navi Mumbai' },
     { id: 3409487, name: 'Sanpada, Navi Mumbai' },
     { id: 3409476, name: 'CBD Belapur, Belapur' }
-  ]);  const [loading, setLoading] = useState(false);
+  ]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   // Enhanced alert levels based on standard AQI categories

@@ -35,7 +35,7 @@ const Routes = () => {
             
             {/* Main application routes */}
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/station-details" element={<StationDetails />} />
+            <Route path="/station-details" element={<Navigate to="/dashboard" replace />} />
             <Route path="/station-details/:id" element={<StationDetails />} />
             <Route path="/historical-analytics" element={<HistoricalAnalytics />} />
             <Route path="/alerts-management" element={<AlertsManagement />} />
