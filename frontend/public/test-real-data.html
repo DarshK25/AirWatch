@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Data Service Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .station { border: 1px solid #ddd; margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .error { color: red; }
+        .success { color: green; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Real Data Service Test</h1>
+    <button onclick="testRealDataService()">Test Real Data Service</button>
+    <div id="results"></div>
+
+    <script>
+        async function testRealDataService() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Testing...</p>';
+            
+            try {
+                // Test the real data service endpoints
+                const response = await fetch('http://localhost:8000/api/v1/aqi/realtime/');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                let html = '<h2 class="success">✅ Real Data Service Working!</h2>';
+                html += `<p><strong>Stations found:</strong> ${data.length}</p>`;
+                
+                data.forEach((station, index) => {
+                    html += `
+                        <div class="station">
+                            <h3>${station.station_name}</h3>
+                            <p><strong>AQI:</strong> ${station.overall_aqi} (${station.aqi_category})</p>
+                            <p><strong>Last Updated:</strong> ${station.last_updated}</p>
+                            <p><strong>Pollutants:</strong> ${Object.keys(station.pollutants).join(', ')}</p>
+                        </div>
+                    `;
+                });
+                
+                html += '<h3>Raw Data:</h3>';
+                html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                resultsDiv.innerHTML = html;
+                
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <h2 class="error">❌ Error Testing Real Data Service</h2>
+                    <p class="error">${error.message}</p>
+                    <p>Make sure the FastAPI backend is running on http://localhost:8000</p>
+                `;
+            }
+        }
+        
+        // Auto-test on page load
+        window.onload = testRealDataService;
+    </script>
+</body>
+</html>

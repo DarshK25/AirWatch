@@ -1,9 +1,12 @@
 import React from "react";
 import Routes from "./Routes";
+import { AirQualityProvider } from "./context/AirQualityContext";
 
 function App() {
   return (
-    <Routes />
+    <AirQualityProvider>
+      <Routes />
+    </AirQualityProvider>
   );
 }
 

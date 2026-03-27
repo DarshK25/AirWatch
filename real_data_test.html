@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AirWatch Pro - Real Data Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .station { border: 1px solid #ddd; margin: 10px 0; padding: 15px; border-radius: 8px; }
+        .aqi { font-size: 24px; font-weight: bold; }
+        .good { color: #10b981; }
+        .moderate { color: #f59e0b; }
+        .unhealthy { color: #ef4444; }
+        .error { color: #ef4444; background: #fef2f2; padding: 10px; border-radius: 4px; }
+        .loading { color: #6b7280; }
+        .pollutants { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 10px 0; }
+        .pollutant { text-align: center; padding: 8px; background: #f9fafb; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>AirWatch Pro - Real Data Test</h1>
+    <p id="status" class="loading">Loading real data from your API...</p>
+    <div id="data-container"></div>
+
+    <script>
+        async function fetchAndDisplayData() {
+            const statusEl = document.getElementById('status');
+            const containerEl = document.getElementById('data-container');
+
+            try {
+                // Test API connection
+                statusEl.textContent = 'Connecting to API...';
+                
+                const response = await fetch('http://localhost:8000/api/v1/stations/');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                statusEl.textContent = `✅ Successfully loaded ${data.stations?.length || 0} stations from your real dataset!`;
+                statusEl.className = 'good';
+
+                if (data.stations && data.stations.length > 0) {
+                    containerEl.innerHTML = data.stations.map(station => `
+                        <div class="station">
+                            <h3>${station.name || 'Unknown Station'}</h3>
+                            <p><strong>Location:</strong> ${station.location || 'Unknown'}</p>
+                            <p><strong>Coordinates:</strong> ${station.latitude || 'N/A'}, ${station.longitude || 'N/A'}</p>
+                            <div class="aqi ${getAQIClass(station.aqi)}">
+                                AQI: ${station.aqi || 'No data'} 
+                                <span style="font-size: 14px;">(${station.aqi_category || 'Unknown'})</span>
+                            </div>
+                            <div class="pollutants">
+                                <div class="pollutant">
+                                    <div>PM2.5</div>
+                                    <div><strong>${station.pm25 || 'N/A'}</strong></div>
+                                </div>
+                                <div class="pollutant">
+                                    <div>PM10</div>
+                                    <div><strong>${station.pm10 || 'N/A'}</strong></div>
+                                </div>
+                                <div class="pollutant">
+                                    <div>NO2</div>
+                                    <div><strong>${station.no2 || 'N/A'}</strong></div>
+                                </div>
+                                <div class="pollutant">
+                                    <div>SO2</div>
+                                    <div><strong>${station.so2 || 'N/A'}</strong></div>
+                                </div>
+                            </div>
+                            <p><small>Last updated: ${station.last_updated ? new Date(station.last_updated).toLocaleString() : 'Unknown'}</small></p>
+                        </div>
+                    `).join('');
+                } else {
+                    containerEl.innerHTML = '<p>No stations found in the response.</p>';
+                }
+
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                statusEl.textContent = `❌ Error: ${error.message}`;
+                statusEl.className = 'error';
+                
+                containerEl.innerHTML = `
+                    <div class="error">
+                        <h3>Connection Failed</h3>
+                        <p>Could not connect to your API. Please ensure:</p>
+                        <ul>
+                            <li>Backend server is running on http://localhost:8000</li>
+                            <li>Database is set up and contains data</li>
+                            <li>No CORS issues (check browser console)</li>
+                        </ul>
+                        <p><strong>Error details:</strong> ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function getAQIClass(aqi) {
+            if (!aqi) return '';
+            if (aqi <= 50) return 'good';
+            if (aqi <= 100) return 'moderate';
+            return 'unhealthy';
+        }
+
+        // Load data when page loads
+        fetchAndDisplayData();
+
+        // Refresh every 30 seconds
+        setInterval(fetchAndDisplayData, 30000);
+    </script>
+</body>
+</html>

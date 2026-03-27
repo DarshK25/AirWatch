@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AirWatch Pro API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .station { border: 1px solid #ddd; margin: 10px 0; padding: 15px; border-radius: 8px; }
+        .aqi { font-size: 24px; font-weight: bold; }
+        .good { color: #00A000; }
+        .satisfactory { color: #7FC700; }
+        .error { color: red; }
+        .loading { color: #666; }
+    </style>
+</head>
+<body>
+    <h1>AirWatch Pro - API Test</h1>
+    
+    <div id="status" class="loading">Loading stations and AQI data...</div>
+    
+    <div id="stations"></div>
+
+    <script>
+        async function testAPI() {
+            const statusDiv = document.getElementById('status');
+            const stationsDiv = document.getElementById('stations');
+            
+            try {
+                // Test stations endpoint
+                const stationsResponse = await fetch('http://localhost:8000/api/v1/stations/');
+                const stations = await stationsResponse.json();
+                
+                // Test AQI endpoint
+                const aqiResponse = await fetch('http://localhost:8000/api/v1/aqi/realtime/');
+                const aqiData = await aqiResponse.json();
+                
+                statusDiv.innerHTML = `✅ Successfully loaded ${stations.length} stations and ${aqiData.length} AQI readings`;
+                statusDiv.className = 'good';
+                
+                // Display station data
+                aqiData.forEach(station => {
+                    const stationDiv = document.createElement('div');
+                    stationDiv.className = 'station';
+                    
+                    const aqiClass = station.aqi_category.toLowerCase().replace(/\s+/g, '-');
+                    
+                    stationDiv.innerHTML = `
+                        <h3>${station.station_name}</h3>
+                        <div class="aqi ${station.aqi_category === 'Good' ? 'good' : 'satisfactory'}">
+                            AQI: ${station.overall_aqi} (${station.aqi_category})
+                        </div>
+                        <p><strong>Location:</strong> ${station.lat}, ${station.lon}</p>
+                        <p><strong>Last Updated:</strong> ${new Date(station.last_updated).toLocaleString()}</p>
+                        <p><strong>Pollutants:</strong> ${Object.keys(station.pollutants).length} types detected</p>
+                    `;
+                    
+                    stationsDiv.appendChild(stationDiv);
+                });
+                
+            } catch (error) {
+                statusDiv.innerHTML = `❌ Error: ${error.message}`;
+                statusDiv.className = 'error';
+                console.error('API Test Error:', error);
+            }
+        }
+        
+        // Run test when page loads
+        testAPI();
+    </script>
+</body>
+</html>
