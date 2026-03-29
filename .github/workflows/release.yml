@@ -1,0 +1,52 @@
+name: Create Release Notes
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., v1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  create-release:
+    name: Create Release Notes
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          CHANGELOG=$(git log --oneline --pretty='%h %s' ${{ github.event.inputs.version }}..HEAD 2>/dev/null || echo "New release")
+          echo "changelog=$CHANGELOG" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.version }}
+          release_name: Release ${{ github.event.inputs.version }}
+          body: |
+            ## What's Changed
+            
+            ${{ steps.changelog.outputs.changelog }}
+            
+            ## Features
+            
+            - Real-time AQI monitoring from 6 stations
+            - 48-hour ML-powered predictions
+            - Interactive React dashboard
+            - Historical analytics
+            - Smart alerts
+            
+            ## Infrastructure
+            
+            - Docker containerization
+            - CI/CD pipeline with GitHub Actions
+            - PostgreSQL/SQLite support
+            
+          draft: false
+          prerelease: false
