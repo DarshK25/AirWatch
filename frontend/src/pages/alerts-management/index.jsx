@@ -10,27 +10,17 @@ import NotificationMethodCard from './components/NotificationMethodCard';
 import AlertHistoryCard from './components/AlertHistoryCard';
 import PredictiveAlertSettings from './components/PredictiveAlertSettings';
 import BulkAlertManager from './components/BulkAlertManager';
-import realDataService from '../../services/realDataService';
 import { useAirQuality } from '../../context/AirQualityContext';
 
 const AlertsManagement = () => {
   const navigate = useNavigate();
-  const { enrichedStations } = useAirQuality();
+  const { enrichedStations, loading: contextLoading } = useAirQuality();
   const [activeTab, setActiveTab] = useState('thresholds');
   const [showToast, setShowToast] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterSeverity, setFilterSeverity] = useState('all');
   const [filterTimeRange, setFilterTimeRange] = useState('7d');
-  const [stations] = useState([
-    { id: 3409469, name: 'Kasarvadavali, Thane' },
-    { id: 3409472, name: 'Upvan Fort, Thane' },
-    { id: 6943, name: 'Mahape, Navi Mumbai' },
-    { id: 3409477, name: 'Kopripada-Vashi, Navi Mumbai' },
-    { id: 3409487, name: 'Sanpada, Navi Mumbai' },
-    { id: 3409476, name: 'CBD Belapur, Belapur' }
-  ]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
   // Enhanced alert levels based on standard AQI categories
   const alertLevels = [
@@ -67,27 +57,6 @@ const AlertsManagement = () => {
       max: 500
     }
   ];
-
-  // Fetch real station data on component mount
-  useEffect(() => {
-    const fetchStations = async () => {
-      try {
-        // Remove loading states - data loads seamlessly
-        setError(null);
-        const stationsData = await realDataService.getStations();
-        // Update stations with real data if available
-        if (stationsData && stationsData.length > 0) {
-          setStations(stationsData);
-        }
-      } catch (err) {
-        console.error('Error fetching stations:', err);
-        setError('Failed to load monitoring stations');
-        // Keep existing fallback data
-      }
-    };
-
-    fetchStations();
-  }, []);
 
   // Use real enriched stations from context
   const monitoringStations = enrichedStations.map((station) => ({

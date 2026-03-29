@@ -133,96 +133,96 @@ const Dashboard = () => {
           )}
 
           {/* ====== FORECAST COMPARISON SECTION (PROMINENT) ====== */}
-          <div className="mb-8 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl p-6 text-white shadow-xl">
+          <div className="mb-8 bg-card border-2 border-blue-200 rounded-2xl p-6 shadow-lg">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                  <Icon name="TrendingUp" size={24} className="text-white" />
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <Icon name="TrendingUp" size={24} className="text-blue-600" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold">48-Hour AQI Forecast</h2>
-                  <p className="text-purple-200 text-sm">ML-Powered Predictions vs Actual Readings</p>
+                  <h2 className="text-xl font-bold text-foreground">48-Hour AQI Forecast</h2>
+                  <p className="text-muted-foreground text-sm">ML-Powered Predictions vs Actual Readings</p>
                 </div>
               </div>
               <select
                 value={selectedStation}
                 onChange={(e) => setSelectedStation(Number(e.target.value))}
-                className="px-4 py-2 bg-white/20 border border-white/30 rounded-lg text-white text-sm"
+                className="px-4 py-2 bg-background border border-border rounded-lg text-foreground text-sm"
               >
                 {enrichedStations.map(s => (
-                  <option key={s.id} value={s.id} className="text-gray-900">{s.name.split(' - ')[0]}</option>
+                  <option key={s.id} value={s.id}>{s.name.split(' - ')[0]}</option>
                 ))}
               </select>
             </div>
 
             {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-white/10 rounded-xl p-4">
+              <div className="bg-green-50 border border-green-200 rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                  <span className="text-sm text-purple-200">Current AQI</span>
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <span className="text-sm text-green-700">Current AQI</span>
                 </div>
-                <div className="text-3xl font-bold">{currentStation?.currentAQI || 0}</div>
-                <div className="text-sm text-purple-200">{currentStation?.aqi_category}</div>
+                <div className="text-3xl font-bold text-green-700">{currentStation?.currentAQI || 0}</div>
+                <div className="text-sm text-green-600">{currentStation?.aqi_category}</div>
               </div>
-              <div className="bg-white/10 rounded-xl p-4">
+              <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-3 h-3 bg-purple-300 rounded-full"></div>
-                  <span className="text-sm text-purple-200">24h Prediction</span>
+                  <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                  <span className="text-sm text-purple-700">24h Prediction</span>
                 </div>
-                <div className="text-3xl font-bold">{forecastData.filter(d => d.predicted).slice(23, 24)[0]?.predicted || '—'}</div>
-                <div className="text-sm text-purple-200">
+                <div className="text-3xl font-bold text-purple-700">{forecastData.filter(d => d.predicted).slice(23, 24)[0]?.predicted || '—'}</div>
+                <div className="text-sm text-purple-600">
                   {forecastData.filter(d => d.predicted).length > 0 ? getAQICategory(forecastData.filter(d => d.predicted)[23]?.predicted) : 'N/A'}
                 </div>
               </div>
-              <div className="bg-white/10 rounded-xl p-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <Icon name="Activity" size={14} className="text-green-400" />
-                  <span className="text-sm text-purple-200">Avg Actual (24h)</span>
+                  <Icon name="Activity" size={14} className="text-blue-500" />
+                  <span className="text-sm text-blue-700">Avg Actual (24h)</span>
                 </div>
-                <div className="text-3xl font-bold">{Math.round(avgActual)}</div>
-                <div className="text-sm text-purple-200">Real readings</div>
+                <div className="text-3xl font-bold text-blue-700">{Math.round(avgActual)}</div>
+                <div className="text-sm text-blue-600">Real readings</div>
               </div>
-              <div className="bg-white/10 rounded-xl p-4">
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <Icon name="Target" size={14} className="text-yellow-400" />
-                  <span className="text-sm text-purple-200">Model Accuracy</span>
+                  <Icon name="Target" size={14} className="text-amber-500" />
+                  <span className="text-sm text-amber-700">Model Accuracy</span>
                 </div>
-                <div className="text-3xl font-bold">{Math.round(predictionAccuracy)}%</div>
-                <div className="text-sm text-purple-200">Based on recent data</div>
+                <div className="text-3xl font-bold text-amber-700">{Math.round(predictionAccuracy)}%</div>
+                <div className="text-sm text-amber-600">Prediction confidence</div>
               </div>
             </div>
 
             {/* Comparison Chart */}
-            <div className="bg-white/10 rounded-xl p-4">
+            <div className="bg-muted/30 border border-border rounded-xl p-4">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-medium">Actual vs Predicted AQI</span>
-                <div className="flex items-center gap-4 text-xs">
+                <span className="text-sm font-medium text-foreground">Actual vs Predicted AQI</span>
+                <div className="flex items-center gap-4 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
-                    <span className="w-4 h-0.5 bg-green-400"></span> Actual (Solid)
+                    <span className="w-4 h-0.5 bg-green-500"></span> Actual (Measured)
                   </span>
                   <span className="flex items-center gap-1">
-                    <span className="w-4 h-0.5 bg-purple-300" style={{ borderStyle: 'dashed', borderWidth: '1px', borderColor: '#c4b5fd' }}></span> Predicted (Dashed)
+                    <span className="w-4 h-0.5 bg-purple-500" style={{ borderStyle: 'dashed' }}></span> Predicted (ML)
                   </span>
                 </div>
               </div>
               {loadingForecast ? (
                 <div className="h-64 flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height={250}>
                   <LineChart data={forecastData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                    <XAxis dataKey="time" tick={{ fontSize: 10, fill: '#c4b5fd' }} interval="preserveStartEnd" />
-                    <YAxis tick={{ fontSize: 10, fill: '#c4b5fd' }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="time" tick={{ fontSize: 10, fill: '#6b7280' }} interval="preserveStartEnd" />
+                    <YAxis tick={{ fontSize: 10, fill: '#6b7280' }} />
                     <Tooltip 
-                      contentStyle={{ backgroundColor: '#1e1b4b', border: 'none', borderRadius: '8px', color: '#fff' }}
+                      contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
                     />
                     <Line 
                       type="monotone" 
                       dataKey="actual" 
-                      stroke="#4ade80" 
+                      stroke="#22c55e" 
                       strokeWidth={3} 
                       dot={false} 
                       name="Actual AQI"
@@ -231,7 +231,7 @@ const Dashboard = () => {
                     <Line 
                       type="monotone" 
                       dataKey="predicted" 
-                      stroke="#c4b5fd" 
+                      stroke="#a855f7" 
                       strokeWidth={3} 
                       strokeDasharray="8 4"
                       dot={false} 
