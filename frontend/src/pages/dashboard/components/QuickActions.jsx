@@ -177,7 +177,7 @@ const QuickActions = ({ className = '' }) => {
       </div>
 
       {/* Actions Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {filteredActions.map((action) => {
           const isExecuting = executingAction === action.id;
           
@@ -191,27 +191,27 @@ const QuickActions = ({ className = '' }) => {
               } ${isExecuting ? 'scale-95' : 'hover:scale-102'}`}
             >
               {/* Action Icon */}
-              <div className={`w-12 h-12 rounded-lg ${action.bgLight} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+              <div className={`w-10 h-10 rounded-lg ${action.bgLight} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
                 {isExecuting ? (
-                  <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <Icon name={action.icon} size={24} className={action.iconColor} />
+                  <Icon name={action.icon} size={20} className={action.iconColor} />
                 )}
               </div>
 
               {/* Action Content */}
               <div>
-                <h4 className="font-medium text-foreground mb-2 group-hover:text-primary transition-colors">
+                <h4 className="font-medium text-foreground mb-1 group-hover:text-primary transition-colors">
                   {action.title}
                 </h4>
-                <p className="text-sm text-muted-foreground leading-relaxed">
+                <p className="text-xs text-muted-foreground line-clamp-2">
                   {action.description}
                 </p>
               </div>
 
               {/* Status Indicator */}
-              <div className="mt-4 flex items-center justify-between">
-                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+              <div className="mt-3 flex items-center justify-between">
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                   action.enabled 
                     ? 'bg-green-100 text-green-800' 
                     : 'bg-gray-100 text-gray-500'
@@ -221,7 +221,7 @@ const QuickActions = ({ className = '' }) => {
                 
                 <Icon 
                   name={isExecuting ? 'Clock' : 'ChevronRight'} 
-                  size={16} 
+                  size={14} 
                   className={`${
                     isExecuting ? 'text-primary animate-pulse' : 'text-muted-foreground group-hover:text-primary'
                   } transition-colors`} 

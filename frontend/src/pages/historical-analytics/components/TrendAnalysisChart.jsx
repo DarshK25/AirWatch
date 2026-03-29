@@ -4,23 +4,22 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
 import Icon from '../../../components/AppIcon';
-import { getAqiHistory } from '../../../utils/api';
+import { getAqiHistory, getStations } from '../../../utils/api';
 
 const COLORS = {
   AQI: '#3B82F6', pm25: '#EF4444', pm10: '#F59E0B',
   no2: '#8B5CF6', so2: '#06B6D4', o3: '#10B981',
 };
 
-const STATION_OPTIONS = [
-  { id: 3409469, name: 'Kasarvadavali, Thane' },
-  { id: 3409472, name: 'Upvan Fort, Thane' },
-  { id: 6943,    name: 'Mahape, Navi Mumbai' },
-  { id: 3409477, name: 'Kopripada-Vashi' },
-  { id: 3409487, name: 'Sanpada, Navi Mumbai' },
-  { id: 3409476, name: 'CBD Belapur' },
-];
-
 const TrendAnalysisChart = () => {
+  const [stationOptions, setStationOptions] = useState([
+    { id: 3409469, name: 'Kasarvadavali, Thane' },
+    { id: 3409472, name: 'Upvan Fort, Thane' },
+    { id: 6943,    name: 'Mahape, Navi Mumbai' },
+    { id: 3409477, name: 'Kopripada-Vashi' },
+    { id: 3409487, name: 'Sanpada, Navi Mumbai' },
+    { id: 3409476, name: 'CBD Belapur' },
+  ]);
   const [stationId, setStationId] = useState(3409476);
   const [hours, setHours] = useState(168);
   const [chartType, setChartType] = useState('area');
@@ -28,6 +27,14 @@ const TrendAnalysisChart = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    getStations().then(stations => {
+      if (stations && stations.length > 0) {
+        setStationOptions(stations.map(s => ({ id: s.id, name: s.name.split(' - ')[0] })));
+      }
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -73,7 +80,7 @@ const TrendAnalysisChart = () => {
           </div>
           <div>
             <h3 className="text-lg font-semibold text-foreground">Trend Analysis</h3>
-            <p className="text-sm text-muted-foreground">Real data from DB</p>
+            <p className="text-sm text-muted-foreground">Historical measured data</p>
           </div>
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -82,7 +89,7 @@ const TrendAnalysisChart = () => {
             onChange={(e) => setStationId(Number(e.target.value))}
             className="px-3 py-1.5 text-sm border border-border rounded-lg bg-background"
           >
-            {STATION_OPTIONS.map((s) => (
+            {stationOptions.map((s) => (
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>
@@ -122,6 +129,25 @@ const TrendAnalysisChart = () => {
             {p.toUpperCase()}
           </button>
         ))}
+      </div>
+
+      {/* Chart Legend */}
+      <div className="mb-4 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+        <p className="text-xs text-blue-800 font-medium mb-2">Chart Legend:</p>
+        <div className="flex flex-wrap gap-4 text-xs text-blue-700">
+          <span className="flex items-center gap-1">
+            <span className="w-6 h-0.5 bg-blue-500 rounded"></span>
+            AQI (Air Quality Index) - Overall air quality
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-6 h-0.5 bg-red-500 rounded"></span>
+            PM2.5 - Fine particulate matter
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-6 h-0.5 bg-yellow-500 rounded"></span>
+            PM10 - Coarse particulate matter
+          </span>
+        </div>
       </div>
 
       {loading ? (
