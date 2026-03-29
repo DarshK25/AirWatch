@@ -31,9 +31,6 @@ const Routes = () => {
         <ScrollToTop />
         <Suspense fallback={<PageLoader />}>
           <RouterRoutes>
-            {/* Redirect root to dashboard */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            
             {/* Landing page */}
             <Route path="/" element={<Landing />} />
             

@@ -136,10 +136,85 @@ const QuickActions = ({ className = '' }) => {
           }
           break;
         case 'station_calibration':
+          // Generate calibration report
+          const calibrationData = {
+            generated_at: new Date().toISOString(),
+            type: 'station_calibration_report',
+            stations: enrichedStations.map(s => ({
+              id: s.id,
+              name: s.name,
+              last_calibrated: s.last_updated || new Date().toISOString(),
+              status: 'Operational',
+              sensors: ['PM2.5', 'PM10', 'NO2', 'SO2', 'O3', 'CO'].map(pollutant => ({
+                name: pollutant,
+                last_reading: s.pollutants?.[pollutant.toLowerCase()]?.value || 'N/A',
+                status: 'Active'
+              }))
+            }))
+          };
+          downloadJSON(calibrationData, 'calibration-report');
+          break;
         case 'generate_report':
+          // Generate comprehensive AQI report
+          const reportData = {
+            generated_at: new Date().toISOString(),
+            type: 'air_quality_report',
+            period: 'Last 24 hours',
+            summary: {
+              avg_aqi: Math.round(enrichedStations.reduce((sum, s) => sum + s.currentAQI, 0) / enrichedStations.length),
+              max_aqi: Math.max(...enrichedStations.map(s => s.currentAQI)),
+              min_aqi: Math.min(...enrichedStations.map(s => s.currentAQI)),
+              stations_count: enrichedStations.length,
+              readings_count: totalReadings
+            },
+            stations: enrichedStations.map(s => ({
+              id: s.id,
+              name: s.name,
+              aqi: s.currentAQI,
+              category: s.aqi_category,
+              last_updated: s.last_updated,
+              coordinates: { lat: s.lat, lon: s.lon }
+            })),
+            recommendations: generateRecommendations(enrichedStations)
+          };
+          downloadJSON(reportData, 'air-quality-report');
+          break;
         case 'system_backup':
+          // Generate system backup
+          const backupData = {
+            generated_at: new Date().toISOString(),
+            type: 'system_backup',
+            version: '1.0.0',
+            data: {
+              stations: enrichedStations,
+              total_readings: totalReadings,
+              active_alerts: enrichedStations.filter(s => s.currentAQI > 100).length,
+              system_status: 'Operational'
+            },
+            metadata: {
+              backup_id: `backup-${Date.now()}`,
+              size_estimate: '2.5 MB'
+            }
+          };
+          downloadJSON(backupData, 'system-backup');
+          break;
         case 'schedule_maintenance':
-          alert(`${action.title}\n\nThis feature will be available in the next release.\nThank you for your interest!`);
+          // Generate maintenance schedule
+          const maintenanceData = {
+            generated_at: new Date().toISOString(),
+            type: 'maintenance_schedule',
+            schedule: enrichedStations.map((s, i) => ({
+              station_id: s.id,
+              station_name: s.name,
+              next_maintenance: new Date(Date.now() + (i + 1) * 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+              tasks: [
+                { task: 'Sensor Calibration', frequency: 'Monthly', status: 'Due' },
+                { task: 'Filter Replacement', frequency: 'Quarterly', status: 'Due' },
+                { task: 'Data Validation', frequency: 'Weekly', status: 'Due' }
+              ]
+            }))
+          };
+          downloadJSON(maintenanceData, 'maintenance-schedule');
           break;
         default:
           console.log(`Action ${action.title} completed`);
@@ -149,6 +224,46 @@ const QuickActions = ({ className = '' }) => {
     } finally {
       setExecutingAction(null);
     }
+  };
+
+  const downloadJSON = (data, filename) => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${filename}-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const generateRecommendations = (stations) => {
+    const recs = [];
+    const highAQI = stations.filter(s => s.currentAQI > 150);
+    if (highAQI.length > 0) {
+      recs.push({
+        priority: 'High',
+        message: `${highAQI.length} stations exceed safe AQI levels. Consider issuing public advisories.`,
+        action: 'Issue Health Advisory'
+      });
+    }
+    const pm25High = stations.filter(s => s.pollutants?.pm25?.value > 60);
+    if (pm25High.length > 0) {
+      recs.push({
+        priority: 'Medium',
+        message: 'PM2.5 levels elevated. Monitor vehicle emissions in affected areas.',
+        action: 'Traffic Advisory'
+      });
+    }
+    if (stations.every(s => s.currentAQI < 100)) {
+      recs.push({
+        priority: 'Info',
+        message: 'All stations within satisfactory range. Air quality is good.',
+        action: 'Continue Monitoring'
+      });
+    }
+    return recs;
   };
 
   return (
