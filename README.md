@@ -177,34 +177,34 @@ sequenceDiagram
 ```mermaid
 flowchart TB
     subgraph Input["Raw Pollutant Data"]
-        PM25[PM2.5 µg/m³]
-        PM10[PM10 µg/m³]
-        NO2[NO₂ ppb]
-        SO2[SO₂ ppb]
-        O3[O₃ ppb]
-        CO[CO ppm]
+        PM25[PM2.5]
+        PM10[PM10]
+        NO2[NO2]
+        SO2[SO2]
+        O3[O3]
+        CO[CO]
     end
 
     subgraph Conversion["Unit Conversion"]
-        PM25_UG[PM2.5 µg/m³]
-        PM10_UG[PM10 µg/m³]
-        NO2_UG[NO₂ µg/m³]
-        SO2_UG[SO₂ µg/m³]
-        O3_UG[O₃ µg/m³]
-        CO_UG[CO mg/m³]
+        PM25_UG[PM2.5]
+        PM10_UG[PM10]
+        NO2_UG[NO2]
+        SO2_UG[SO2]
+        O3_UG[O3]
+        CO_UG[CO]
     end
 
     subgraph SubIndex["Sub-Index Calculation"]
-        SI_PM25[PM2.5 Sub-Index]
-        SI_PM10[PM10 Sub-Index]
-        SI_NO2[NO₂ Sub-Index]
-        SI_SO2[SO₂ Sub-Index]
-        SI_O3[O₃ Sub-Index]
-        SI_CO[CO Sub-Index]
+        SI_PM25[PM2.5 Index]
+        SI_PM10[PM10 Index]
+        SI_NO2[NO2 Index]
+        SI_SO2[SO2 Index]
+        SI_O3[O3 Index]
+        SI_CO[CO Index]
     end
 
     subgraph Final["Final AQI"]
-        MAX[Max(All Sub-Indices)]
+        MAX[Max of All Indices]
         AQI[AQI Category]
     end
 
