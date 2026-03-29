@@ -128,11 +128,18 @@ const QuickActions = ({ className = '' }) => {
           URL.revokeObjectURL(url);
           break;
         case 'emergency_alert':
+          const criticalStations = enrichedStations.filter(s => s.currentAQI > 150);
+          if (criticalStations.length > 0) {
+            alert(`Emergency Alert Triggered!\n\nCritical AQI levels detected at:\n${criticalStations.map(s => `• ${s.name.split(' - ')[0]}: AQI ${s.currentAQI}`).join('\n')}\n\nNotifications would be sent to all subscribers.`);
+          } else {
+            alert(`Air Quality Alert\n\nCurrent AQI levels are within acceptable ranges.\nNo emergency alert needed at this time.`);
+          }
+          break;
         case 'station_calibration':
         case 'generate_report':
         case 'system_backup':
         case 'schedule_maintenance':
-          alert(`${action.title} feature coming soon!`);
+          alert(`${action.title}\n\nThis feature will be available in the next release.\nThank you for your interest!`);
           break;
         default:
           console.log(`Action ${action.title} completed`);
