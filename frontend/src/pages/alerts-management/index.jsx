@@ -21,6 +21,7 @@ const AlertsManagement = () => {
   const [filterSeverity, setFilterSeverity] = useState('all');
   const [filterTimeRange, setFilterTimeRange] = useState('7d');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // Enhanced alert levels based on standard AQI categories
   const alertLevels = [
