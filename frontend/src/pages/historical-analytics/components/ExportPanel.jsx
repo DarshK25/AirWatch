@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import { Checkbox } from '../../../components/ui/Checkbox';
+import { exportData, getAqiHistory } from '../../../utils/api';
 
 const ExportPanel = ({ filters, onExport }) => {
-  const [exportFormat, setExportFormat] = useState('pdf');
+  const [exportFormat, setExportFormat] = useState('csv');
   const [exportOptions, setExportOptions] = useState({
     includeCharts: true,
     includeStatistics: true,
-    includeRawData: false,
+    includeRawData: true,
     includeMetadata: true,
     compressData: false
   });
@@ -81,36 +82,31 @@ const ExportPanel = ({ filters, onExport }) => {
     setIsExporting(true);
     
     try {
-      // Simulate export process
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const timestamp = new Date().toISOString().split('T')[0];
+      let content, mimeType, filename;
       
-      const exportData = {
-        format: exportFormat,
-        options: exportOptions,
-        dateRange: customDateRange,
-        filters: filters,
-        timestamp: new Date()?.toISOString(),
-        filename: `airwatch-analytics-${exportFormat}-${Date.now()}`
-      };
+      if (exportFormat === 'csv') {
+        content = await exportData('csv');
+        mimeType = 'text/csv';
+        filename = `airwatch-data-${timestamp}.csv`;
+      } else {
+        content = await exportData('json');
+        mimeType = 'application/json';
+        filename = `airwatch-data-${timestamp}.json`;
+      }
       
-      // In a real application, this would trigger the actual export
-      console.log('Exporting data:', exportData);
-      
-      // Simulate file download
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], { 
-        type: 'application/json' 
-      });
+      const blob = new Blob([content], { type: mimeType });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${exportData?.filename}.${exportFormat}`;
-      document.body?.appendChild(a);
-      a?.click();
-      document.body?.removeChild(a);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
       URL.revokeObjectURL(url);
       
       if (onExport) {
-        onExport(exportData);
+        onExport({ format: exportFormat, timestamp });
       }
       
     } catch (error) {

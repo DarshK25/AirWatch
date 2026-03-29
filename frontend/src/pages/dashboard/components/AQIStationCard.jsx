@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
 import { useNavigate } from 'react-router-dom';
+import { getPredictions } from '../../../utils/api';
 
 const AQIStationCard = ({ station, className = '' }) => {
   const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentReading, setCurrentReading] = useState(station?.currentAQI || 0);
+  const [prediction, setPrediction] = useState(null);
+  const [loadingPred, setLoadingPred] = useState(false);
 
   const getAQIStatus = (value) => {
     if (value <= 50) return { status: 'good', label: 'Good', color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200' };
@@ -35,7 +38,28 @@ const AQIStationCard = ({ station, className = '' }) => {
   // Update reading when station prop changes
   useEffect(() => {
     setCurrentReading(station?.currentAQI || 0);
-  }, [station?.currentAQI]);
+    
+    // Fetch 24h prediction
+    if (station?.id) {
+      setLoadingPred(true);
+      getPredictions(station.id)
+        .then(preds => {
+          if (preds && preds.length > 0) {
+            // Get 24h ahead prediction
+            const now = new Date();
+            const targetTime = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+            const closest = preds.reduce((prev, curr) => {
+              const prevDiff = Math.abs(new Date(prev.prediction_time) - targetTime);
+              const currDiff = Math.abs(new Date(curr.prediction_time) - targetTime);
+              return currDiff < prevDiff ? curr : prev;
+            });
+            setPrediction(closest?.predicted_aqi);
+          }
+        })
+        .catch(() => setPrediction(null))
+        .finally(() => setLoadingPred(false));
+    }
+  }, [station?.currentAQI, station?.id]);
 
   const handleCardClick = () => {
     navigate(`/station-details/${station?.id}`);
@@ -112,19 +136,23 @@ const AQIStationCard = ({ station, className = '' }) => {
       </div>
 
       {/* Prediction */}
-      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg mb-4">
+      <div className="flex items-center justify-between p-3 bg-purple-50 border border-purple-100 rounded-lg mb-4">
         <div className="flex items-center space-x-2">
-          <Icon name="Clock" size={14} className="text-gray-500" />
-          <span className="text-sm text-gray-600">24h Forecast</span>
+          <Icon name="TrendingUp" size={14} className="text-purple-500" />
+          <span className="text-sm text-purple-700">24h Forecast</span>
         </div>
-        <div className="flex items-center space-x-2">
-          <span className="text-sm font-mono font-semibold text-gray-900">
-            {station?.prediction24h || currentReading}
-          </span>
-          <span className={`text-xs px-2 py-1 rounded-full ${getAQIStatus(station?.prediction24h || currentReading)?.bg} ${getAQIStatus(station?.prediction24h || currentReading)?.color}`}>
-            {getAQIStatus(station?.prediction24h || currentReading)?.label}
-          </span>
-        </div>
+        {loadingPred ? (
+          <div className="animate-spin rounded-full h-4 w-4 border-2 border-purple-500 border-t-transparent" />
+        ) : (
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-mono font-semibold text-purple-700">
+              {prediction || '—'}
+            </span>
+            <span className={`text-xs px-2 py-1 rounded-full ${getAQIStatus(prediction || currentReading)?.bg} ${getAQIStatus(prediction || currentReading)?.color}`}>
+              {prediction ? getAQIStatus(prediction)?.label : 'N/A'}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Expanded Details */}

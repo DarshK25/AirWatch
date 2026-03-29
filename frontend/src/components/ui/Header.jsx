@@ -30,7 +30,7 @@ const Header = () => {
 
   const navigationItems = [
     { path: '/dashboard', label: 'Dashboard', icon: 'LayoutDashboard' },
-    { path: '/station-details', label: 'Stations', icon: 'MapPin' },
+    { path: '/stations', label: 'Stations', icon: 'MapPin' },
     { path: '/historical-analytics', label: 'Analytics', icon: 'TrendingUp' },
     { path: '/alerts-management', label: 'Alerts', icon: 'Bell' },
   

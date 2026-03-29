@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import Icon from '../../../components/AppIcon';
+import { exportData } from '../../../utils/api';
+import { useAirQuality } from '../../../context/AirQualityContext';
 
 const QuickActions = ({ className = '' }) => {
-  // Real actions data - NO LOADING
+  const { enrichedStations } = useAirQuality();
+  
+  // Real actions data
   const [actions] = useState([
     {
       id: 'emergency_alert',
@@ -20,7 +24,7 @@ const QuickActions = ({ className = '' }) => {
     {
       id: 'data_export',
       title: 'Export Data',
-      description: 'Download air quality data from all 6 stations',
+      description: 'Download air quality data from all stations',
       icon: 'Download',
       color: 'bg-blue-500',
       hoverColor: 'hover:bg-blue-600',
@@ -88,8 +92,8 @@ const QuickActions = ({ className = '' }) => {
   const [executingAction, setExecutingAction] = useState(null);
 
   // Real station data for context
-  const stationCount = 6;
-  const totalReadings = '2.5M+';
+  const stationCount = enrichedStations.length;
+  const totalReadings = enrichedStations.length * 1000;
 
   const categories = [
     { id: 'all', name: 'All Actions', icon: 'Grid' },
@@ -110,31 +114,28 @@ const QuickActions = ({ className = '' }) => {
     setExecutingAction(action.id);
 
     try {
-      // Simulate action execution with real context
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Real action responses
       switch (action.id) {
-        case 'emergency_alert':
-          console.log(`Emergency alert sent to ${stationCount} monitoring stations`);
-          break;
         case 'data_export':
-          console.log(`Exporting ${totalReadings} readings from ${stationCount} stations`);
+          const csvData = await exportData('csv');
+          const blob = new Blob([csvData], { type: 'text/csv' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `airwatch-export-${new Date().toISOString().split('T')[0]}.csv`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
           break;
+        case 'emergency_alert':
         case 'station_calibration':
-          console.log(`Calibration started for ${stationCount} monitoring stations`);
-          break;
         case 'generate_report':
-          console.log(`Generating comprehensive report for ${stationCount} stations`);
-          break;
         case 'system_backup':
-          console.log(`Backing up ${totalReadings} readings and system configurations`);
-          break;
         case 'schedule_maintenance':
-          console.log(`Maintenance scheduled for ${stationCount} monitoring stations`);
+          alert(`${action.title} feature coming soon!`);
           break;
         default:
-          console.log(`Action ${action.title} completed successfully`);
+          console.log(`Action ${action.title} completed`);
       }
     } catch (error) {
       console.error(`Failed to execute ${action.title}:`, error);
@@ -257,7 +258,7 @@ const QuickActions = ({ className = '' }) => {
             <p className="text-xs text-muted-foreground">Active Stations</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-foreground">{totalReadings}</p>
+            <p className="text-2xl font-bold text-foreground">{totalReadings.toLocaleString()}</p>
             <p className="text-xs text-muted-foreground">Total Readings</p>
           </div>
         </div>

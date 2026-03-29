@@ -5,12 +5,12 @@ import ErrorBoundary from './components/ErrorBoundary';
 
 // Lazy load components for better performance
 const Dashboard = React.lazy(() => import('./pages/dashboard'));
+const Stations = React.lazy(() => import('./pages/stations'));
 const StationDetails = React.lazy(() => import('./pages/station-details'));
 const HistoricalAnalytics = React.lazy(() => import('./pages/historical-analytics'));
 const AlertsManagement = React.lazy(() => import('./pages/alerts-management'));
 const Login = React.lazy(() => import('./pages/login'));
 const Register = React.lazy(() => import('./pages/register'));
-const ImplementationStatus = React.lazy(() => import('./pages/implementation-status'));
 const NotFound = React.lazy(() => import('./pages/NotFound'));
 
 // Loading component for Suspense
@@ -35,7 +35,7 @@ const Routes = () => {
             
             {/* Main application routes */}
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/station-details" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/stations" element={<Stations />} />
             <Route path="/station-details/:id" element={<StationDetails />} />
             <Route path="/historical-analytics" element={<HistoricalAnalytics />} />
             <Route path="/alerts-management" element={<AlertsManagement />} />

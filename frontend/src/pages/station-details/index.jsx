@@ -245,7 +245,16 @@ const StationDetails = () => {
         {activeTab === 'trends' && (
           <div className="bg-card border border-border rounded-xl p-6">
             <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-              <h3 className="text-lg font-semibold text-foreground">Historical AQI Trend</h3>
+              <div className="flex items-center gap-3">
+                <h3 className="text-lg font-semibold text-foreground">Historical AQI Trend</h3>
+                <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">
+                  Real Data
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span className="w-4 h-0.5 bg-blue-500"></span>
+                <span>Measured (solid line)</span>
+              </div>
               <div className="flex gap-2">
                 {[24, 72, 168, 720].map((h) => (
                   <button
@@ -292,7 +301,18 @@ const StationDetails = () => {
         {/* ── 48h Forecast ── */}
         {activeTab === 'forecast' && (
           <div className="bg-card border border-border rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-6">48-Hour AQI Forecast</h3>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <h3 className="text-lg font-semibold text-foreground">48-Hour AQI Forecast</h3>
+                <span className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-700 rounded-full">
+                  Predicted Data
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span className="w-4 h-0.5 bg-purple-500" style={{ borderStyle: 'dashed' }}></span>
+                <span>Predicted (dotted line)</span>
+              </div>
+            </div>
             {predictionsLoading ? (
               <div className="h-80 flex items-center justify-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -313,17 +333,17 @@ const StationDetails = () => {
                   </LineChart>
                 </ResponsiveContainer>
                 <div className="mt-4 grid grid-cols-3 gap-4 text-center">
-                  <div className="bg-muted/50 rounded-lg p-3">
-                    <div className="text-xl font-bold">{Math.round(predChartData.reduce((s, p) => s + p['Predicted AQI'], 0) / predChartData.length)}</div>
+                  <div className="bg-purple-50 rounded-lg p-3">
+                    <div className="text-xl font-bold text-purple-600">{Math.round(predChartData.reduce((s, p) => s + p['Predicted AQI'], 0) / predChartData.length)}</div>
                     <div className="text-xs text-muted-foreground">Avg Predicted AQI</div>
                   </div>
-                  <div className="bg-muted/50 rounded-lg p-3">
-                    <div className="text-xl font-bold text-destructive">{Math.max(...predChartData.map((p) => p['Predicted AQI']))}</div>
-                    <div className="text-xs text-muted-foreground">Peak</div>
+                  <div className="bg-purple-50 rounded-lg p-3">
+                    <div className="text-xl font-bold text-red-600">{Math.max(...predChartData.map((p) => p['Predicted AQI']))}</div>
+                    <div className="text-xs text-muted-foreground">Peak Forecast</div>
                   </div>
-                  <div className="bg-muted/50 rounded-lg p-3">
+                  <div className="bg-purple-50 rounded-lg p-3">
                     <div className="text-xl font-bold text-green-600">{Math.min(...predChartData.map((p) => p['Predicted AQI']))}</div>
-                    <div className="text-xs text-muted-foreground">Lowest</div>
+                    <div className="text-xs text-muted-foreground">Lowest Forecast</div>
                   </div>
                 </div>
               </>

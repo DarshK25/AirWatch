@@ -8,6 +8,7 @@ const Breadcrumbs = () => {
 
   const pathMap = {
     '/dashboard': 'Dashboard',
+    '/stations': 'Stations',
     '/station-details': 'Station Details',
     '/historical-analytics': 'Historical Analytics',
     '/alerts-management': 'Alerts Management'

@@ -86,4 +86,55 @@ export const triggerIngestion = () =>
 export const triggerPredictions = () =>
   api.post('/scheduler/run/predictions').then((r) => r.data);
 
+// ---------------------------------------------------------------------------
+// Export
+// ---------------------------------------------------------------------------
+export const exportData = async (format = 'csv', stationIds = null) => {
+  const stations = await getStations();
+  const aqiData = await getRealtimeAqi();
+  
+  const stationIdsToExport = stationIds || stations.map(s => s.id);
+  
+  const exportRecords = [];
+  
+  for (const stationId of stationIdsToExport) {
+    const station = stations.find(s => s.id === stationId);
+    const aqi = aqiData.find(a => a.station_id === stationId);
+    
+    if (!station) continue;
+    
+    exportRecords.push({
+      station_id: station.id,
+      station_name: station.name,
+      latitude: station.lat,
+      longitude: station.lon,
+      datetime: new Date().toISOString(),
+      overall_aqi: aqi?.overall_aqi || 0,
+      aqi_category: aqi?.aqi_category || 'Unknown',
+      pm25: aqi?.pollutants?.pm25?.value || 0,
+      pm10: aqi?.pollutants?.pm10?.value || 0,
+      no2: aqi?.pollutants?.no2?.value || 0,
+      so2: aqi?.pollutants?.so2?.value || 0,
+      o3: aqi?.pollutants?.o3?.value || 0,
+      co: aqi?.pollutants?.co?.value || 0,
+    });
+  }
+  
+  if (format === 'csv') {
+    const headers = ['Station ID', 'Station Name', 'Latitude', 'Longitude', 'DateTime', 'AQI', 'Category', 'PM2.5', 'PM10', 'NO2', 'SO2', 'O3', 'CO'];
+    const rows = exportRecords.map(r => [
+      r.station_id, r.station_name, r.latitude, r.longitude, r.datetime,
+      r.overall_aqi, r.aqi_category, r.pm25, r.pm10, r.no2, r.so2, r.o3, r.co
+    ]);
+    return [headers, ...rows].map(row => row.join(',')).join('\n');
+  }
+  
+  return JSON.stringify({
+    generated_at: new Date().toISOString(),
+    data_source: 'AirWatch Pro',
+    total_stations: exportRecords.length,
+    records: exportRecords
+  }, null, 2);
+};
+
 export default api;
