@@ -1,6 +1,9 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, JSONResponse
 from app.api import endpoints
 from app.core.scheduler import start_scheduler, shutdown_scheduler
 from app.core.db import engine
@@ -86,7 +89,20 @@ app.add_middleware(
 
 app.include_router(endpoints.router, prefix="/api/v1")
 
+frontend_candidates = [
+    Path(__file__).resolve().parents[1] / "static",
+    Path(__file__).resolve().parents[2] / "frontend" / "dist",
+]
+frontend_dist = next((path for path in frontend_candidates if path.exists()), None)
+
+if frontend_dist:
+    # Mount the built Vite app after API routes so a single Render service can
+    # serve both the frontend SPA and the FastAPI backend.
+    app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
+
 
 @app.get("/", include_in_schema=False)
 async def root():
-    return {"message": "AirWatch Pro API is running. See /docs for API documentation."}
+    if frontend_dist:
+        return FileResponse(frontend_dist / "index.html")
+    return JSONResponse({"message": "AirWatch Pro API is running. See /docs for API documentation."})
