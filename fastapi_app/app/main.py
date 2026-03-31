@@ -9,8 +9,7 @@ from app.models.user import User
 
 
 def init_db():
-    from app.models.user import User
-    from sqlalchemy import text
+    from sqlalchemy import inspect, text
     Base.metadata.create_all(bind=engine)
     from app.core.db import SessionLocal
     db = SessionLocal()
