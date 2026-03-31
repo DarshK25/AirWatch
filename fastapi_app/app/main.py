@@ -26,8 +26,8 @@ def init_db():
         
         if db.query(Station).count() == 0:
             from app.services.ingestion import bulk_ingest_data
-            print("Loading real AQI data from CSV...")
-            bulk_ingest_data(db, limit=1000)
+            print("Loading real AQI data from CSV (all stations)...")
+            bulk_ingest_data(db, limit=6000)
             station_count = db.query(Station).count()
             reading_count = db.query(Reading).count()
             print(f"Loaded {station_count} stations and {reading_count} readings.")
@@ -57,14 +57,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# --- CORS ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.allowed_origins,
-    allow_origin_regex=settings.ALLOWED_ORIGIN_REGEX,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 app.include_router(endpoints.router, prefix="/api/v1")

@@ -54,7 +54,10 @@ def bulk_ingest_data(db: Session, csv_path: str = CSV_FILE_PATH, limit: int = No
     
     # Apply limit if specified (memory constraint)
     if limit:
-        df = df.head(limit)
+        # To ensure we get all stations even with a limit, 
+        # we can sort by location_id and datetime, or just increase the limit.
+        # Actually, let's just make sure we don't truncate exactly at one station.
+        df = df.sort_values(['datetime'], ascending=False).head(limit)
 
     # 2. Populate Station Table 
     # Select unique location metadata and rename columns to match the Station model

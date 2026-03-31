@@ -99,7 +99,7 @@ const Header = () => {
     <header className="fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border">
       <div className="flex items-center justify-between h-16 px-6">
         {/* Logo */}
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate('/')}>
           <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary">
             <Icon name="Wind" size={20} color="white" />
           </div>

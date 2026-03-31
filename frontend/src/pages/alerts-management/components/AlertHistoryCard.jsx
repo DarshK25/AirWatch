@@ -58,9 +58,7 @@ const AlertHistoryCard = ({ alert, onShare }) => {
   };
 
   const handleViewStation = () => {
-    navigate('/station-details', { 
-      state: { stationId: alert?.stationId, stationName: alert?.stationName } 
-    });
+    navigate(`/station-details/${alert?.stationId}`);
   };
 
   const handleShare = () => {
