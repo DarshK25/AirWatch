@@ -3,6 +3,31 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import endpoints
 from app.core.scheduler import start_scheduler, shutdown_scheduler
+from app.core.db import engine
+from app.models.aqi import Base, Station, Reading, Prediction
+from app.models.user import User
+
+
+def init_db():
+    Base.metadata.create_all(bind=engine)
+    from app.core.db import SessionLocal
+    db = SessionLocal()
+    try:
+        if db.query(Station).count() == 0:
+            default_stations = [
+                Station(id=1, name="Kasarvadavali, Thane", lat=19.26777, lon=72.97182),
+                Station(id=2, name="Bandra, Mumbai", lat=19.05956, lon=72.82962),
+                Station(id=3, name="Andheri, Mumbai", lat=19.1136, lon=72.8697),
+                Station(id=4, name="Powai, Mumbai", lat=19.1172, lon=72.9050),
+                Station(id=5, name="Dadar, Mumbai", lat=19.0176, lon=72.8422),
+                Station(id=6, name="Navi Mumbai", lat=19.0330, lon=73.0297),
+                Station(id=7, name="Thane City", lat=19.1860, lon=72.9753),
+                Station(id=8, name="Kanjurmarg, Mumbai", lat=19.1285, lon=72.9380),
+            ]
+            db.add_all(default_stations)
+            db.commit()
+    finally:
+        db.close()
 
 
 # ---------------------------------------------------------------------------
@@ -11,7 +36,8 @@ from app.core.scheduler import start_scheduler, shutdown_scheduler
 # ---------------------------------------------------------------------------
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # STARTUP: kick off the background scheduler
+    # STARTUP: create tables and seed data if needed
+    init_db()
     start_scheduler()
     yield
     # SHUTDOWN: stop the scheduler cleanly
