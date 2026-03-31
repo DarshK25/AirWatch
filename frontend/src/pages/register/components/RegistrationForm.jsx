@@ -210,6 +210,7 @@ const RegistrationForm = () => {
       <Input
         label="Full Name"
         type="text"
+        autoComplete="name"
         placeholder="Enter your full name"
         value={formData?.fullName}
         onChange={(e) => handleInputChange('fullName', e?.target?.value)}
@@ -220,6 +221,7 @@ const RegistrationForm = () => {
       <Input
         label="Email Address"
         type="email"
+        autoComplete="email"
         placeholder="Enter your email address"
         value={formData?.email}
         onChange={(e) => handleInputChange('email', e?.target?.value)}
@@ -232,6 +234,7 @@ const RegistrationForm = () => {
         <Input
           label="Password"
           type="password"
+          autoComplete="new-password"
           placeholder="Create a strong password"
           value={formData?.password}
           onChange={(e) => handleInputChange('password', e?.target?.value)}
@@ -266,6 +269,7 @@ const RegistrationForm = () => {
       <Input
         label="Confirm Password"
         type="password"
+        autoComplete="new-password"
         placeholder="Confirm your password"
         value={formData?.confirmPassword}
         onChange={(e) => handleInputChange('confirmPassword', e?.target?.value)}

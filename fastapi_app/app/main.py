@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from app.api import endpoints
+from app.core.config import settings
 from app.core.scheduler import start_scheduler, shutdown_scheduler
 from app.core.db import engine
 from app.models.aqi import Base, Station, Reading, Prediction
@@ -77,11 +78,8 @@ app = FastAPI(
 # --- CORS ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://air-watch-theta.vercel.app",
-        "http://localhost:5173",
-        "http://localhost:3000",
-    ],
+    allow_origins=settings.allowed_origins,
+    allow_origin_regex=settings.ALLOWED_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
