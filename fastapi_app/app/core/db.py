@@ -4,8 +4,8 @@ from typing import Generator
 from app.core.config import settings
 import sys
 
-# Database URL is loaded from settings
-SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
+# Database URL is loaded from settings and normalized for writable SQLite paths.
+SQLALCHEMY_DATABASE_URL = settings.database_url
 
 print(f"Connecting to database: {SQLALCHEMY_DATABASE_URL}")
 
@@ -13,9 +13,13 @@ try:
     # Create the SQLAlchemy engine (the connection pool)
     # Note: In a production environment, you would use asyncpg and async SQLAlchemy,
     # but for this setup, the synchronous engine is appropriate.
+    engine_kwargs = {"echo": True}
+    if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
+        engine_kwargs["connect_args"] = {"check_same_thread": False}
+
     engine = create_engine(
         SQLALCHEMY_DATABASE_URL,
-        echo=True  # Enable SQL logging for debugging
+        **engine_kwargs
     )
     
     # Test the connection
