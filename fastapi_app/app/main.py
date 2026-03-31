@@ -16,9 +16,10 @@ def init_db():
         if db.query(Station).count() == 0:
             from app.services.ingestion import bulk_ingest_data
             print("Loading real AQI data from CSV...")
-            bulk_ingest_data(db)
+            bulk_ingest_data(db, limit=1000)
             station_count = db.query(Station).count()
-            print(f"Loaded {station_count} stations from CSV data.")
+            reading_count = db.query(Reading).count()
+            print(f"Loaded {station_count} stations and {reading_count} readings.")
     finally:
         db.close()
 

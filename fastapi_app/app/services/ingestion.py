@@ -18,10 +18,11 @@ COLUMN_NAMES = [
     'value'
 ]
 
-def bulk_ingest_data(db: Session, csv_path: str = CSV_FILE_PATH):
+def bulk_ingest_data(db: Session, csv_path: str = CSV_FILE_PATH, limit: int = None):
     """
     Ingests data from the CSV file into the Station and Reading tables by explicitly
     defining column names and specifying the tab delimiter (TSV fix).
+    Set limit to restrict number of readings loaded (for memory-constrained environments).
     """
     # Local imports for ORM models
     from app.models.aqi import Station, Reading 
@@ -50,6 +51,10 @@ def bulk_ingest_data(db: Session, csv_path: str = CSV_FILE_PATH):
     except Exception as e:
         print(f"FATAL ERROR: Could not convert 'datetime' column values to datetime objects: {e}")
         return
+    
+    # Apply limit if specified (memory constraint)
+    if limit:
+        df = df.head(limit)
 
     # 2. Populate Station Table 
     # Select unique location metadata and rename columns to match the Station model
