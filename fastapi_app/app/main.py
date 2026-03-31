@@ -14,18 +14,11 @@ def init_db():
     db = SessionLocal()
     try:
         if db.query(Station).count() == 0:
-            default_stations = [
-                Station(id=1, name="Kasarvadavali, Thane", lat=19.26777, lon=72.97182),
-                Station(id=2, name="Bandra, Mumbai", lat=19.05956, lon=72.82962),
-                Station(id=3, name="Andheri, Mumbai", lat=19.1136, lon=72.8697),
-                Station(id=4, name="Powai, Mumbai", lat=19.1172, lon=72.9050),
-                Station(id=5, name="Dadar, Mumbai", lat=19.0176, lon=72.8422),
-                Station(id=6, name="Navi Mumbai", lat=19.0330, lon=73.0297),
-                Station(id=7, name="Thane City", lat=19.1860, lon=72.9753),
-                Station(id=8, name="Kanjurmarg, Mumbai", lat=19.1285, lon=72.9380),
-            ]
-            db.add_all(default_stations)
-            db.commit()
+            from app.services.ingestion import bulk_ingest_data
+            print("Loading real AQI data from CSV...")
+            bulk_ingest_data(db)
+            station_count = db.query(Station).count()
+            print(f"Loaded {station_count} stations from CSV data.")
     finally:
         db.close()
 
