@@ -9,10 +9,36 @@ from app.models.user import User
 
 
 def init_db():
+    from app.models.user import User
+    from sqlalchemy import text
     Base.metadata.create_all(bind=engine)
     from app.core.db import SessionLocal
     db = SessionLocal()
     try:
+        inspector = inspect(engine)
+        existing_tables = inspector.get_table_names()
+        print(f"Existing tables: {existing_tables}")
+        
+        if 'users' not in existing_tables:
+            print("Creating users table...")
+            db.execute(text("""
+                CREATE TABLE users (
+                    id INTEGER NOT NULL PRIMARY KEY,
+                    full_name VARCHAR(255) NOT NULL,
+                    email VARCHAR(255) NOT NULL UNIQUE,
+                    hashed_password VARCHAR(255) NOT NULL,
+                    user_type VARCHAR(100) NOT NULL,
+                    location VARCHAR(255),
+                    is_active BOOLEAN DEFAULT 1,
+                    is_verified BOOLEAN DEFAULT 0,
+                    created_at DATETIME,
+                    last_login DATETIME,
+                    profile_picture TEXT
+                )
+            """))
+            db.commit()
+            print("Users table created.")
+        
         if db.query(Station).count() == 0:
             from app.services.ingestion import bulk_ingest_data
             print("Loading real AQI data from CSV...")
