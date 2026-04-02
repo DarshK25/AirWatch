@@ -52,12 +52,8 @@ def bulk_ingest_data(db: Session, csv_path: str = CSV_FILE_PATH, limit: int = No
         print(f"FATAL ERROR: Could not convert 'datetime' column values to datetime objects: {e}")
         return
     
-    # Apply limit if specified (memory constraint)
-    if limit:
-        # To ensure we get all stations even with a limit, 
-        # we can sort by location_id and datetime, or just increase the limit.
-        # Actually, let's just make sure we don't truncate exactly at one station.
-        df = df.sort_values(['datetime'], ascending=False).head(limit)
+    # Extract all stations before applying any reading limit
+    # 2. Populate Station Table 
 
     # 2. Populate Station Table 
     # Select unique location metadata and rename columns to match the Station model
@@ -85,6 +81,9 @@ def bulk_ingest_data(db: Session, csv_path: str = CSV_FILE_PATH, limit: int = No
     else:
         print("Stations already present or 0 to insert.")
 
+    # Apply limit if specified (memory constraint) for Readings
+    if limit:
+        df = df.sort_values(['datetime'], ascending=False).head(limit)
 
     # 3. Prepare Reading Data
     # Select and rename columns to match the Reading model structure

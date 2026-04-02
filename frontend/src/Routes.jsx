@@ -12,6 +12,8 @@ const Login = React.lazy(() => import('./pages/login'));
 const Register = React.lazy(() => import('./pages/register'));
 const ImplementationStatus = React.lazy(() => import('./pages/implementation-status'));
 const NotFound = React.lazy(() => import('./pages/NotFound'));
+const Stations = React.lazy(() => import('./pages/stations'));
+const Landing = React.lazy(() => import('./pages/landing'));
 
 // Loading component for Suspense
 const PageLoader = () => (
@@ -30,11 +32,12 @@ const Routes = () => {
         <ScrollToTop />
         <Suspense fallback={<PageLoader />}>
           <RouterRoutes>
-            {/* Redirect root to dashboard */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            {/* Landing page as root */}
+            <Route path="/" element={<Landing />} />
             
             {/* Main application routes */}
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/stations" element={<Stations />} />
             <Route path="/station-details" element={<StationDetails />} />
             <Route path="/station-details/:id" element={<StationDetails />} />
             <Route path="/historical-analytics" element={<HistoricalAnalytics />} />

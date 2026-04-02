@@ -195,27 +195,45 @@ def get_aqi_history(
     rows = db.execute(
         text("""
             SELECT
-                strftime('%Y-%m-%dT%H:00:00', datetime) AS hour,
+                datetime,
                 parameter,
                 unit,
-                AVG(value) AS avg_value
+                value
             FROM readings
             WHERE station_id = :sid
               AND datetime >= :since
-            GROUP BY hour, parameter, unit
-            ORDER BY hour ASC
         """),
-        {"sid": station_id, "since": since.strftime("%Y-%m-%d %H:%M:%S")},
+        {"sid": station_id, "since": since},
     ).fetchall()
 
     if not rows:
         return []
 
-    # Group by hour
+    # Group by hour in Python to support all SQL dialects (SQLite, PostgreSQL, etc.)
     from collections import defaultdict
-    by_hour: dict = defaultdict(dict)
+    temp_by_hour = defaultdict(lambda: defaultdict(list))
+    
     for row in rows:
-        by_hour[row[0]][row[1].lower()] = {"value": row[3], "unit": row[2]}
+        dt = row[0]
+        if isinstance(dt, str):
+            try:
+                dt = datetime.fromisoformat(dt.replace('Z', '+00:00')[:19])
+            except ValueError:
+                # Fallback purely for safety
+                continue
+        hour_str = dt.strftime('%Y-%m-%dT%H:00:00')
+        param = row[1].lower()
+        temp_by_hour[hour_str][param].append((row[2], row[3]))
+
+    by_hour = defaultdict(dict)
+    for hour_str, params in temp_by_hour.items():
+        for param, values_list in params.items():
+            valid_values = [v[1] for v in values_list if v[1] is not None]
+            if not valid_values:
+                continue
+            avg_val = sum(valid_values) / len(valid_values)
+            unit = values_list[0][0]
+            by_hour[hour_str][param] = {"value": avg_val, "unit": unit}
 
     history = []
     for hour_str, params in sorted(by_hour.items()):
