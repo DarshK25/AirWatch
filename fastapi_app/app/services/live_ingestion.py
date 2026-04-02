@@ -236,11 +236,22 @@ def run_live_ingestion(db: Session) -> dict:
     # --- Step 2: build task list ---
     # Each task = (station_id, param, sensor_id, chunk_from, chunk_to)
     tasks = []
+    
+    # Priority A: Fetch the MOST RECENT 48 hours first (ensures "live" status)
+    priority_window_start = now_utc - timedelta(hours=48)
+    
+    for station_id, sensors in STATION_SENSORS.items():
+        for param, sensor_id in sensors.items():
+            tasks.append((station_id, param, sensor_id, priority_window_start, now_utc))
+
+    # Priority B: Catch up from historical latest timestamp (if any gap exists)
     for station_id, sensors in STATION_SENSORS.items():
         latest_dt = latest_per_station[station_id]
-        for param, sensor_id in sensors.items():
-            for chunk_from, chunk_to in _date_chunks(latest_dt, now_utc):
-                tasks.append((station_id, param, sensor_id, chunk_from, chunk_to))
+        # Only catch up if the gap is larger than our priority window
+        if latest_dt < priority_window_start:
+            for param, sensor_id in sensors.items():
+                for chunk_from, chunk_to in _date_chunks(latest_dt, priority_window_start):
+                    tasks.append((station_id, param, sensor_id, chunk_from, chunk_to))
 
     total_tasks = len(tasks)
     logger.info(f"[INGESTION] Starting parallel fetch — {total_tasks} tasks, {MAX_WORKERS} workers")
