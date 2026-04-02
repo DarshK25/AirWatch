@@ -31,6 +31,23 @@ def init_db():
             station_count = db.query(Station).count()
             reading_count = db.query(Reading).count()
             print(f"Loaded {station_count} stations and {reading_count} readings.")
+            
+        # Ensure a demo user exists so the frontend "Use Mock Data / Demo Login" button works
+        if db.query(User).filter(User.email == "demo@example.com").count() == 0:
+            from app.core.auth import get_password_hash
+            demo_user = User(
+                full_name="Demo User",
+                email="demo@example.com",
+                hashed_password=get_password_hash("password123"),
+                user_type="admin",
+                location="Headquarters",
+                is_active=True,
+                is_verified=True,
+            )
+            db.add(demo_user)
+            db.commit()
+            print("Seeded demo user: demo@example.com")
+            
     finally:
         db.close()
 
@@ -59,7 +76,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
