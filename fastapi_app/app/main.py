@@ -24,7 +24,7 @@ def init_db():
         
         pass # Handled by SQLAlchemy tables creation
         
-        if db.query(Station).count() == 0:
+        if db.query(Station).count() < 6:
             from app.services.ingestion import bulk_ingest_data
             print("Loading real AQI data from CSV (all stations)...")
             bulk_ingest_data(db, limit=6000)
