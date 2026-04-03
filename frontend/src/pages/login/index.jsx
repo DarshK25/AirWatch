@@ -89,10 +89,10 @@ const Login = () => {
               </p>
               <div className="space-y-1 text-xs font-mono">
                 <div className="text-foreground">
-                  <span className="text-muted-foreground">Demo Email:</span> admin@airwatch.pro
+                  <span className="text-muted-foreground">Demo Email:</span> demo@example.com
                 </div>
                 <div className="text-foreground">
-                  <span className="text-muted-foreground">Demo Password:</span> airwatch123
+                  <span className="text-muted-foreground">Demo Password:</span> demo123
                 </div>
               </div>
             </div>

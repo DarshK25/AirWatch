@@ -14,40 +14,43 @@ from app.models.user import User
 
 def init_db():
     from sqlalchemy import inspect, text
+
     Base.metadata.create_all(bind=engine)
     from app.core.db import SessionLocal
+
     db = SessionLocal()
     try:
         inspector = inspect(engine)
         existing_tables = inspector.get_table_names()
         print(f"Existing tables: {existing_tables}")
-        
-        pass # Handled by SQLAlchemy tables creation
-        
+
+        pass  # Handled by SQLAlchemy tables creation
+
         if db.query(Station).count() < 6:
             from app.services.ingestion import bulk_ingest_data
+
             print("Loading real AQI data from CSV (all stations)...")
             bulk_ingest_data(db, limit=6000)
             station_count = db.query(Station).count()
             reading_count = db.query(Reading).count()
             print(f"Loaded {station_count} stations and {reading_count} readings.")
-            
+
         # Ensure a demo user exists so the frontend "Use Mock Data / Demo Login" button works
         if db.query(User).filter(User.email == "demo@example.com").count() == 0:
             from app.core.auth import get_password_hash
+
             demo_user = User(
                 full_name="Demo User",
                 email="demo@example.com",
-                hashed_password=get_password_hash("password123"),
-                user_type="admin",
-                location="Headquarters",
+                hashed_password=get_password_hash("demo123"),
+                user_type="environmental-professional",
                 is_active=True,
                 is_verified=True,
             )
             db.add(demo_user)
             db.commit()
-            print("Seeded demo user: demo@example.com")
-            
+            print("Seeded demo user: demo@example.com / demo123")
+
     finally:
         db.close()
 
@@ -101,4 +104,6 @@ if frontend_dist:
 async def root():
     if frontend_dist:
         return FileResponse(frontend_dist / "index.html")
-    return JSONResponse({"message": "AirWatch Pro API is running. See /docs for API documentation."})
+    return JSONResponse(
+        {"message": "AirWatch Pro API is running. See /docs for API documentation."}
+    )
