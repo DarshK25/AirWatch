@@ -25,10 +25,11 @@ const HistoricalAnalytics = () => {
     { id: 3409476, name: 'CBD Belapur, Belapur' }
   ]);
   const [analyticsData, setAnalyticsData] = useState(null);
+  const now = new Date();
   const [activeFilters, setActiveFilters] = useState({
     dateRange: {
-      startDate: '2024-01-01',
-      endDate: '2024-12-31'
+      startDate: `${now.getFullYear()}-01-01`,
+      endDate: `${now.getFullYear()}-12-31`
     },
     stations: ['all'],
     pollutants: ['pm25', 'pm10', 'no2'],

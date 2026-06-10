@@ -14,9 +14,10 @@ const ExportPanel = ({ filters, onExport }) => {
     compressData: false
   });
   const [isExporting, setIsExporting] = useState(false);
+  const now = new Date();
   const [customDateRange, setCustomDateRange] = useState({
-    start: filters?.dateRange?.startDate || '2024-01-01',
-    end: filters?.dateRange?.endDate || '2024-12-31'
+    start: filters?.dateRange?.startDate || `${now.getFullYear()}-01-01`,
+    end: filters?.dateRange?.endDate || `${now.getFullYear()}-12-31`
   });
 
   const exportFormats = [

@@ -5,9 +5,10 @@ import Select from '../../../components/ui/Select';
 import { Checkbox } from '../../../components/ui/Checkbox';
 
 const FilterToolbar = ({ onFiltersChange, isLoading }) => {
+  const now = new Date();
   const [dateRange, setDateRange] = useState({
-    startDate: '2024-01-01',
-    endDate: '2024-12-31'
+    startDate: `${now.getFullYear()}-01-01`,
+    endDate: `${now.getFullYear()}-12-31`
   });
   const [selectedStations, setSelectedStations] = useState(['all']);
   const [selectedPollutants, setSelectedPollutants] = useState(['pm25', 'pm10', 'no2']);
@@ -69,7 +70,7 @@ const FilterToolbar = ({ onFiltersChange, isLoading }) => {
 
   const resetFilters = () => {
     const defaultFilters = {
-      dateRange: { startDate: '2024-01-01', endDate: '2024-12-31' },
+      dateRange: { startDate: `${(new Date()).getFullYear()}-01-01`, endDate: `${(new Date()).getFullYear()}-12-31` },
       stations: ['all'],
       pollutants: ['pm25', 'pm10', 'no2'],
       timeframe: 'monthly'
