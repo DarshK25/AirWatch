@@ -29,8 +29,14 @@ try:
         print("Database connection successful!")
 except Exception as e:
     print(f"ERROR: Could not connect to the database: {e}")
-    print("Please check your DATABASE_URL and ensure PostgreSQL is running.")
-    sys.exit(1)
+    print("Falling back to SQLite...")
+    SQLALCHEMY_DATABASE_URL = "sqlite:///./airwatch.db"
+    engine_kwargs = {"echo": True, "connect_args": {"check_same_thread": False}}
+    engine = create_engine(SQLALCHEMY_DATABASE_URL, **engine_kwargs)
+    with engine.connect() as connection:
+        from sqlalchemy import text
+        result = connection.execute(text("SELECT 1"))
+        print("SQLite connection successful!")
 
 # Create a configured "Session" class
 SessionLocal = sessionmaker(
