@@ -1,0 +1,19 @@
+name: Keep Render Alive
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    name: Ping Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call API to keep instance awake
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" https://airwatch-p0bo.onrender.com/api/v1/stations/ || true
+
+      - name: Ping Frontend
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" https://air-watch-theta.vercel.app/ || true
