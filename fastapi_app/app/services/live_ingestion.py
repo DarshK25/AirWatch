@@ -250,14 +250,19 @@ def run_live_ingestion(db: Session) -> dict:
         for param, sensor_id in sensors.items():
             tasks.append((station_id, param, sensor_id, priority_window_start, now_utc))
 
-    # Priority B: Catch up from historical latest timestamp (if any gap exists)
+    # Priority B: Catch up recent gaps only (max 7 days back).
+    # Prevents a flood of 2000+ tasks when there's a 300-day gap from CSV import.
+    catchup_limit = timedelta(days=7)
+    catchup_start = now_utc - timedelta(hours=48) - catchup_limit
     for station_id, sensors in STATION_SENSORS.items():
         latest_dt = latest_per_station[station_id]
-        # Only catch up if the gap is larger than our priority window
         if latest_dt < priority_window_start:
-            for param, sensor_id in sensors.items():
-                for chunk_from, chunk_to in _date_chunks(latest_dt, priority_window_start):
-                    tasks.append((station_id, param, sensor_id, chunk_from, chunk_to))
+            # Only fetch if latest_dt is within catchup_limit of the priority window
+            catchup_from = max(latest_dt, catchup_start)
+            if catchup_from < priority_window_start:
+                for param, sensor_id in sensors.items():
+                    for chunk_from, chunk_to in _date_chunks(catchup_from, priority_window_start):
+                        tasks.append((station_id, param, sensor_id, chunk_from, chunk_to))
 
     total_tasks = len(tasks)
     logger.info(f"[INGESTION] Starting parallel fetch — {total_tasks} tasks, {MAX_WORKERS} workers")
