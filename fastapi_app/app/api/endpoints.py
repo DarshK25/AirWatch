@@ -213,6 +213,8 @@ def get_aqi_history(
         ).scalar()
         if not latest_ts:
             return []
+        if isinstance(latest_ts, str):
+            latest_ts = datetime.fromisoformat(latest_ts.replace('Z', '+00:00'))
         since_latest = latest_ts - timedelta(hours=hours)
         rows = db.execute(
             text("""
