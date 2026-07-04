@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, 
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import List, Dict, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from app.core.db import get_db
 from app.core.scheduler import scheduler, job_generate_predictions, job_retrain_model, job_live_ingestion
@@ -436,3 +436,60 @@ def trigger_retrain_now(background_tasks: BackgroundTasks):
 def trigger_ingestion_now(background_tasks: BackgroundTasks):
     background_tasks.add_task(job_live_ingestion)
     return {"message": "Live ingestion job triggered."}
+
+
+# ---------------------------------------------------------------------------
+# Debug — OpenAQ connection test
+# ---------------------------------------------------------------------------
+
+@router.get("/debug/openaq-test", tags=["Debug"])
+def debug_openaq_test():
+    """Tests OpenAQ API connectivity from the server environment."""
+    import requests as req
+    from app.core.config import settings
+
+    api_key = settings.OPENAQ_API_KEY
+    if not api_key:
+        return {
+            "status": "error",
+            "message": "OPENAQ_API_KEY is not set in environment",
+            "key_length": 0,
+        }
+
+    # Test sensor 12238253 (CO for station 3409469)
+    now_utc = datetime.now(timezone.utc)
+    from_str = (now_utc - timedelta(hours=48)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    to_str = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+    url = (
+        f"https://api.openaq.org/v3/sensors/12238253/measurements"
+        f"?limit=1&datetime_from={from_str}&datetime_to={to_str}"
+    )
+
+    try:
+        resp = req.get(url, headers={"X-API-Key": api_key}, timeout=15)
+        if resp.status_code == 200:
+            data = resp.json()
+            return {
+                "status": "ok",
+                "message": "OpenAQ API connected successfully",
+                "key_length": len(api_key),
+                "key_preview": api_key[:8] + "...",
+                "sensor_data_count": len(data.get("results", [])),
+                "status_code": 200,
+            }
+        else:
+            return {
+                "status": "error",
+                "message": f"OpenAQ API returned {resp.status_code}",
+                "key_length": len(api_key),
+                "key_preview": api_key[:8] + "...",
+                "detail": resp.text[:500],
+                "status_code": resp.status_code,
+            }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Exception during OpenAQ test: {e}",
+            "key_length": len(api_key),
+            "key_preview": api_key[:8] + "...",
+        }
