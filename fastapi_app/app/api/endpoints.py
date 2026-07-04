@@ -456,7 +456,6 @@ def debug_openaq_test():
             "key_length": 0,
         }
 
-    # Test sensor 12238253 (CO for station 3409469)
     now_utc = datetime.now(timezone.utc)
     from_str = (now_utc - timedelta(hours=48)).strftime("%Y-%m-%dT%H:%M:%SZ")
     to_str = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -476,6 +475,7 @@ def debug_openaq_test():
                 "key_preview": api_key[:8] + "...",
                 "sensor_data_count": len(data.get("results", [])),
                 "status_code": 200,
+                "db_url": str(settings.database_url)[:50],
             }
         else:
             return {
@@ -485,6 +485,7 @@ def debug_openaq_test():
                 "key_preview": api_key[:8] + "...",
                 "detail": resp.text[:500],
                 "status_code": resp.status_code,
+                "db_url": str(settings.database_url)[:50],
             }
     except Exception as e:
         return {
@@ -492,4 +493,60 @@ def debug_openaq_test():
             "message": f"Exception during OpenAQ test: {e}",
             "key_length": len(api_key),
             "key_preview": api_key[:8] + "...",
+            "db_url": str(settings.database_url)[:50],
         }
+
+
+@router.post("/debug/run-ingestion-sync", tags=["Debug"])
+def debug_run_ingestion_sync(db: Session = Depends(get_db)):
+    """Runs live ingestion synchronously and returns the summary + latest timestamps."""
+    from app.core.scheduler import job_live_ingestion
+    import logging
+
+    # Capture logs
+    import io
+    log_capture = io.StringIO()
+    handler = logging.StreamHandler(log_capture)
+    handler.setLevel(logging.DEBUG)
+    ingestion_logger = logging.getLogger("app.services.live_ingestion")
+    ingestion_logger.addHandler(handler)
+
+    scheduler_logger = logging.getLogger("app.core.scheduler")
+    scheduler_logger.addHandler(handler)
+
+    try:
+        from app.services.live_ingestion import run_live_ingestion
+        summary = run_live_ingestion(db)
+        logs = log_capture.getvalue()
+    except Exception as e:
+        import traceback
+        logs = log_capture.getvalue()
+        return {
+            "status": "error",
+            "message": str(e),
+            "traceback": traceback.format_exc(),
+            "logs": logs[-2000:],
+        }
+    finally:
+        ingestion_logger.removeHandler(handler)
+        scheduler_logger.removeHandler(handler)
+
+    # Check latest timestamps after ingestion
+    from app.models.aqi import Reading
+    latest_per_station = {}
+    for sid in [6943, 3409469, 3409472, 3409476, 3409477, 3409487]:
+        result = db.execute(
+            text("SELECT MAX(datetime) FROM readings WHERE station_id = :sid"),
+            {"sid": sid}
+        ).scalar()
+        latest_per_station[str(sid)] = str(result) if result else None
+
+    reading_count = db.query(Reading).count()
+
+    return {
+        "status": "completed",
+        "summary": summary,
+        "latest_per_station": latest_per_station,
+        "total_readings": reading_count,
+        "logs": logs[-2000:],
+    }
