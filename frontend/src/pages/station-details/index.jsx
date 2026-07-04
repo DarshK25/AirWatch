@@ -85,8 +85,20 @@ const StationDetails = () => {
   const aqiInfo = getAQILevel(station.overall_aqi);
 
   // Format history for chart
+  const formatDateTime = (dt) => new Date(dt).toLocaleString('en-IN', {
+    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata',
+  });
+  const formatTime = (dt) => {
+    const d = new Date(dt);
+    const now = new Date();
+    const isToday = d.toDateString() === now.toDateString();
+    return isToday
+      ? d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })
+      : d.toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', timeZone: 'Asia/Kolkata' });
+  };
+
   const historyChartData = history.map((h) => ({
-    time: new Date(h.datetime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' }),
+    time: formatTime(h.datetime),
     AQI: h.overall_aqi,
     PM25: h.pollutants?.pm25 ?? null,
     PM10: h.pollutants?.pm10 ?? null,
@@ -95,17 +107,38 @@ const StationDetails = () => {
 
   // Format predictions for chart
   const predChartData = predictions.slice(0, 48).map((p) => ({
-    time: new Date(p.prediction_time).toLocaleString('en-IN', {
-      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata',
-    }),
+    time: formatDateTime(p.prediction_time),
     'Predicted AQI': p.predicted_aqi,
   }));
 
+  // Merge actual + predicted for comparison (use history that overlaps with prediction window)
+  const comparisonData = predictions.slice(0, 48).map((p) => {
+    const match = history.find((h) => {
+      const pHour = new Date(p.prediction_time).getTime();
+      const hHour = new Date(h.datetime).getTime();
+      return Math.abs(pHour - hHour) < 3600000;
+    });
+    return {
+      time: formatDateTime(p.prediction_time),
+      'Predicted AQI': p.predicted_aqi,
+      'Actual AQI': match?.overall_aqi ?? null,
+    };
+  });
+
+  // Accuracy metrics from prediction vs actual overlap
+  const validComparisons = comparisonData.filter((d) => d['Actual AQI'] != null);
+  const accuracyMetrics = validComparisons.length > 0 ? {
+    count: validComparisons.length,
+    mae: Math.round(validComparisons.reduce((s, d) => s + Math.abs(d['Predicted AQI'] - d['Actual AQI']), 0) / validComparisons.length),
+    avgPredicted: Math.round(validComparisons.reduce((s, d) => s + d['Predicted AQI'], 0) / validComparisons.length),
+    avgActual: Math.round(validComparisons.reduce((s, d) => s + d['Actual AQI'], 0) / validComparisons.length),
+  } : null;
+
   const tabs = [
     { id: 'overview',   name: 'Overview',         icon: 'BarChart3' },
-    { id: 'pollutants', name: 'Pollutants',        icon: 'Activity' },
-    { id: 'trends',     name: 'Historical Trends', icon: 'TrendingUp' },
     { id: 'forecast',   name: '48h Forecast',      icon: 'Clock' },
+    { id: 'trends',     name: 'Historical Trends', icon: 'TrendingUp' },
+    { id: 'pollutants', name: 'Pollutants',        icon: 'Activity' },
     { id: 'nearby',     name: 'Nearby Stations',   icon: 'MapPin' },
   ];
 
@@ -300,19 +333,21 @@ const StationDetails = () => {
 
         {/* ── 48h Forecast ── */}
         {activeTab === 'forecast' && (
-          <div className="bg-card border border-border rounded-xl p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <h3 className="text-lg font-semibold text-foreground">48-Hour AQI Forecast</h3>
-                <span className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-700 rounded-full">
-                  Predicted Data
-                </span>
+          <div className="space-y-6">
+            {/* Hero section */}
+            <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-xl p-8 text-white">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-white/20 rounded-lg">
+                  <Icon name="Clock" size={20} />
+                </div>
+                <h2 className="text-2xl font-bold">48-Hour AQI Forecast</h2>
               </div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span className="w-4 h-0.5 bg-purple-500" style={{ borderStyle: 'dashed' }}></span>
-                <span>Predicted (dotted line)</span>
-              </div>
+              <p className="text-purple-100 text-sm max-w-2xl">
+                Machine learning predictions using XGBoost trained on historical sensor data.
+                Updated every hour with the latest readings.
+              </p>
             </div>
+
             {predictionsLoading ? (
               <div className="h-80 flex items-center justify-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -323,29 +358,95 @@ const StationDetails = () => {
               </div>
             ) : (
               <>
-                <ResponsiveContainer width="100%" height={350}>
-                  <LineChart data={predChartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border, #e5e7eb)" />
-                    <XAxis dataKey="time" tick={{ fontSize: 10 }} interval={5} />
-                    <YAxis tick={{ fontSize: 11 }} />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="Predicted AQI" stroke="#8B5CF6" strokeWidth={2} dot={false} strokeDasharray="5 5" />
-                  </LineChart>
-                </ResponsiveContainer>
-                <div className="mt-4 grid grid-cols-3 gap-4 text-center">
-                  <div className="bg-purple-50 rounded-lg p-3">
-                    <div className="text-xl font-bold text-purple-600">{Math.round(predChartData.reduce((s, p) => s + p['Predicted AQI'], 0) / predChartData.length)}</div>
-                    <div className="text-xs text-muted-foreground">Avg Predicted AQI</div>
+                {/* Prediction Chart */}
+                <div className="bg-card border border-border rounded-xl p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-lg font-semibold text-foreground">Forecast &amp; Actual Comparison</h3>
+                      <span className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-700 rounded-full">
+                        XGBoost
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <span className="w-4 h-0.5 bg-purple-500" style={{ borderStyle: 'dashed' }}></span>
+                        Predicted
+                      </span>
+                      {comparisonData.some(d => d['Actual AQI'] != null) && (
+                        <span className="flex items-center gap-1">
+                          <span className="w-4 h-0.5 bg-emerald-500"></span>
+                          Actual
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="bg-purple-50 rounded-lg p-3">
-                    <div className="text-xl font-bold text-red-600">{Math.max(...predChartData.map((p) => p['Predicted AQI']))}</div>
-                    <div className="text-xs text-muted-foreground">Peak Forecast</div>
+                  <ResponsiveContainer width="100%" height={350}>
+                    <LineChart data={comparisonData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border, #e5e7eb)" />
+                      <XAxis dataKey="time" tick={{ fontSize: 10 }} interval={5} />
+                      <YAxis tick={{ fontSize: 11 }} />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="Predicted AQI" stroke="#8B5CF6" strokeWidth={2} dot={false} strokeDasharray="5 5" />
+                      {comparisonData.some(d => d['Actual AQI'] != null) && (
+                        <Line type="monotone" dataKey="Actual AQI" stroke="#10B981" strokeWidth={2} dot={false} />
+                      )}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Summary stats row */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-5 border border-purple-200">
+                    <div className="text-xs text-purple-600 font-medium mb-1">Average Prediction</div>
+                    <div className="text-2xl font-bold text-purple-700">{Math.round(predChartData.reduce((s, p) => s + p['Predicted AQI'], 0) / predChartData.length)}</div>
+                    <div className="text-xs text-purple-500">AQI</div>
                   </div>
-                  <div className="bg-purple-50 rounded-lg p-3">
-                    <div className="text-xl font-bold text-green-600">{Math.min(...predChartData.map((p) => p['Predicted AQI']))}</div>
-                    <div className="text-xs text-muted-foreground">Lowest Forecast</div>
+                  <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-5 border border-red-200">
+                    <div className="text-xs text-red-600 font-medium mb-1">Peak Forecast</div>
+                    <div className="text-2xl font-bold text-red-700">{Math.max(...predChartData.map((p) => p['Predicted AQI']))}</div>
+                    <div className="text-xs text-red-500">AQI</div>
+                  </div>
+                  <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-5 border border-green-200">
+                    <div className="text-xs text-green-600 font-medium mb-1">Lowest Forecast</div>
+                    <div className="text-2xl font-bold text-green-700">{Math.min(...predChartData.map((p) => p['Predicted AQI']))}</div>
+                    <div className="text-xs text-green-500">AQI</div>
+                  </div>
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 border border-blue-200">
+                    <div className="text-xs text-blue-600 font-medium mb-1">Forecast Range</div>
+                    <div className="text-2xl font-bold text-blue-700">{Math.max(...predChartData.map((p) => p['Predicted AQI'])) - Math.min(...predChartData.map((p) => p['Predicted AQI']))}</div>
+                    <div className="text-xs text-blue-500">AQI spread</div>
                   </div>
                 </div>
+
+                {/* Accuracy section (only if we have overlap) */}
+                {accuracyMetrics && (
+                  <div className="bg-card border border-emerald-200 rounded-xl p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-2 bg-emerald-100 rounded-lg">
+                        <Icon name="CheckCircle" size={16} className="text-emerald-600" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-foreground">Forecast Accuracy</h3>
+                      <span className="px-2 py-1 text-xs font-medium bg-emerald-100 text-emerald-700 rounded-full">
+                        {accuracyMetrics.count} matching points
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="bg-background rounded-lg p-4 text-center">
+                        <div className="text-2xl font-bold text-emerald-600">{accuracyMetrics.mae}</div>
+                        <div className="text-xs text-muted-foreground">Mean Absolute Error (MAE)</div>
+                        <div className="text-xs text-muted-foreground mt-1">Lower = better</div>
+                      </div>
+                      <div className="bg-background rounded-lg p-4 text-center">
+                        <div className="text-2xl font-bold text-purple-600">{accuracyMetrics.avgPredicted}</div>
+                        <div className="text-xs text-muted-foreground">Avg Predicted AQI</div>
+                      </div>
+                      <div className="bg-background rounded-lg p-4 text-center">
+                        <div className="text-2xl font-bold text-emerald-600">{accuracyMetrics.avgActual}</div>
+                        <div className="text-xs text-muted-foreground">Avg Actual AQI</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>
