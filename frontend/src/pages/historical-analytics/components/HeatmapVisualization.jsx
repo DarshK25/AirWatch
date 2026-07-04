@@ -108,45 +108,54 @@ const HeatmapVisualization = ({ filters, stations }) => {
       </div>
 
       {/* Heatmap */}
-      <div className="overflow-x-auto">
+      <div style={{ overflowX: 'auto' }}>
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
           </div>
         ) : heatmapData.length > 0 ? (
-          <div className="min-w-max">
-            <div className="grid grid-cols-25 gap-1 mb-2">
-              <div className="text-xs font-medium text-muted-foreground"></div>
-              {hours.map(hour => (
-                <div key={hour} className="text-xs font-medium text-muted-foreground text-center">
-                  {hour}:00
-                </div>
+          <table style={{ borderCollapse: 'separate', borderSpacing: '2px' }}>
+            <thead>
+              <tr>
+                <th style={{ width: '8rem', textAlign: 'right', paddingRight: '8px' }}></th>
+                {hours.map(hour => (
+                  <th key={hour} style={{ width: '2rem', textAlign: 'center' }} className="text-xs font-medium text-muted-foreground">
+                    {hour}:00
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {stationNames.map(stationName => (
+                <tr key={stationName}>
+                  <td style={{ width: '8rem', textAlign: 'right', paddingRight: '8px' }} className="text-xs font-medium truncate text-muted-foreground">
+                    {stationName}
+                  </td>
+                  {hours.map(hour => {
+                    const dataPoint = heatmapData.find(d => d.station === stationName && d.hour === hour);
+                    const value = dataPoint?.value || 0;
+                    return (
+                      <td
+                        key={hour}
+                        title={`${stationName} ${hour}:00 - ${value}`}
+                        className="text-xs font-medium cursor-pointer"
+                        style={{
+                          width: '2rem', height: '2rem', textAlign: 'center', borderRadius: '4px',
+                          border: '1px solid rgba(0,0,0,0.1)',
+                          backgroundColor: value > 0 ? getHeatmapColor(value) : '#f3f4f6',
+                          transition: 'transform 0.2s',
+                        }}
+                        onMouseOver={e => e.currentTarget.style.transform = 'scale(1.1)'}
+                        onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
+                      >
+                        {value > 0 ? value : '-'}
+                      </td>
+                    );
+                  })}
+                </tr>
               ))}
-            </div>
-            
-            {stationNames.map(stationName => (
-              <div key={stationName} className="grid grid-cols-25 gap-1 mb-1 items-center">
-                <div className="text-xs font-medium text-right pr-2 min-w-32 truncate">
-                  {stationName}
-                </div>
-                {hours.map(hour => {
-                  const dataPoint = heatmapData.find(d => d.station === stationName && d.hour === hour);
-                  const value = dataPoint?.value || 0;
-                  
-                  return (
-                    <div
-                      key={hour}
-                      className="w-8 h-8 rounded-sm border flex items-center justify-center text-xs font-medium cursor-pointer hover:scale-110 transition-transform"
-                      style={{ backgroundColor: value > 0 ? getHeatmapColor(value) : '#f3f4f6' }}
-                      title={`${stationName} ${hour}:00 - ${value}`}
-                    >
-                      {value > 0 ? value : '-'}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
+            </tbody>
+          </table>
         ) : (
           <div className="text-center py-12 text-muted-foreground">
             No heatmap data available

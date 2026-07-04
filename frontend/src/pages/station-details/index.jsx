@@ -105,7 +105,26 @@ const StationDetails = () => {
     NO2: h.pollutants?.no2 ?? null,
   }));
 
-  // Format predictions for chart
+  // Merge predictions into history chart data (future extension)
+  const latestHistoryTs = history.length > 0
+    ? Math.max(...history.map(h => new Date(h.datetime).getTime()))
+    : Date.now();
+
+  // Only show predictions that extend beyond latest history point
+  const futurePreds = predictions
+    .filter(p => new Date(p.prediction_time).getTime() > latestHistoryTs)
+    .slice(0, 48);
+
+  const combinedChartData = [
+    ...historyChartData,
+    ...futurePreds.map(p => ({
+      time: formatDateTime(p.prediction_time),
+      AQI: null,
+      'Predicted AQI': p.predicted_aqi,
+    })),
+  ];
+
+  // Format predictions for chart (forecast tab)
   const predChartData = predictions.slice(0, 48).map((p) => ({
     time: formatDateTime(p.prediction_time),
     'Predicted AQI': p.predicted_aqi,
@@ -284,9 +303,9 @@ const StationDetails = () => {
                   Real Data
                 </span>
               </div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span className="w-4 h-0.5 bg-blue-500"></span>
-                <span>Measured (solid line)</span>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1"><span className="w-4 h-0.5 bg-blue-500"></span> Measured</span>
+                <span className="flex items-center gap-1"><span className="w-4 h-0.5 bg-purple-500" style={{ borderTop: '2px dashed #8B5CF6', height: 0 }}></span> Predicted</span>
               </div>
               <div className="flex gap-2">
                 {[24, 72, 168, 720].map((h) => (
@@ -306,11 +325,11 @@ const StationDetails = () => {
               <div className="h-80 flex items-center justify-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
               </div>
-            ) : historyChartData.length === 0 ? (
+            ) : combinedChartData.length === 0 ? (
               <div className="h-80 flex items-center justify-center text-muted-foreground">No data for this period</div>
             ) : (
               <ResponsiveContainer width="100%" height={350}>
-                <AreaChart data={historyChartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                <AreaChart data={combinedChartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="aqiGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
@@ -325,6 +344,7 @@ const StationDetails = () => {
                   <Area type="monotone" dataKey="AQI" stroke="#3B82F6" fill="url(#aqiGrad)" strokeWidth={2} dot={false} />
                   <Line type="monotone" dataKey="PM25" stroke="#EF4444" strokeWidth={1.5} dot={false} />
                   <Line type="monotone" dataKey="PM10" stroke="#F59E0B" strokeWidth={1.5} dot={false} />
+                  <Line type="monotone" dataKey="Predicted AQI" stroke="#8B5CF6" strokeWidth={2} strokeDasharray="5 5" dot={false} connectNulls />
                 </AreaChart>
               </ResponsiveContainer>
             )}

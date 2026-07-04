@@ -122,23 +122,24 @@ const StatisticalSummary = () => {
             <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
               <Icon name="Shield" size={15} /> AQI Distribution ({stats.distribution.total} hours)
             </h4>
-            <div className="space-y-2">
+            <div style={{ display: 'grid', gap: '0.5rem' }}>
               {[
-                ['Good (0–50)',         stats.distribution.good,         'text-green-600'],
-                ['Satisfactory (51–100)', stats.distribution.satisfactory, 'text-lime-600'],
-                ['Moderate (101–200)',  stats.distribution.moderate,     'text-yellow-600'],
-                ['Poor (201–300)',      stats.distribution.poor,         'text-orange-600'],
-                ['Very Poor (301–400)', stats.distribution.veryPoor,     'text-red-600'],
-                ['Severe (400+)',       stats.distribution.severe,       'text-purple-700'],
-              ].map(([label, count, color]) => {
+                ['Good (0–50)',         stats.distribution.good,         '#16a34a'],
+                ['Satisfactory (51–100)', stats.distribution.satisfactory, '#65a30d'],
+                ['Moderate (101–200)',  stats.distribution.moderate,     '#ca8a04'],
+                ['Poor (201–300)',      stats.distribution.poor,         '#ea580c'],
+                ['Very Poor (301–400)', stats.distribution.veryPoor,     '#dc2626'],
+                ['Severe (400+)',       stats.distribution.severe,       '#7c3aed'],
+              ].map(([label, count, hexColor]) => {
                 const pct = ((count / stats.distribution.total) * 100).toFixed(1);
+                const textColor = hexColor;
                 return (
-                  <div key={label} className="flex items-center gap-3">
-                    <div className="w-36 text-sm text-muted-foreground flex-shrink-0">{label}</div>
-                    <div className="flex-1 bg-muted rounded-full h-2">
-                      <div className={`h-2 rounded-full ${color.replace('text-', 'bg-')}`} style={{ width: `${pct}%` }} />
+                  <div key={label} style={{ display: 'grid', gridTemplateColumns: '140px 1fr 80px', gap: '0.75rem', alignItems: 'center' }}>
+                    <div className="text-sm text-muted-foreground">{label}</div>
+                    <div className="bg-muted rounded-full h-2" style={{ minWidth: 0 }}>
+                      <div className="h-2 rounded-full" style={{ width: `${pct}%`, backgroundColor: hexColor, minWidth: count > 0 ? '4px' : 0 }} />
                     </div>
-                    <div className={`text-sm font-medium w-16 text-right ${color}`}>{count} ({pct}%)</div>
+                    <div className="text-sm font-medium text-right" style={{ color: textColor }}>{count} ({pct}%)</div>
                   </div>
                 );
               })}
