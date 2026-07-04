@@ -24,8 +24,6 @@ from typing import Optional
 import requests
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from sqlalchemy.dialects.sqlite import insert as sqlite_insert
-from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 logger = logging.getLogger(__name__)
 
@@ -189,33 +187,25 @@ def _fetch_one(station_id: int, param: str, sensor_id: int,
 
 def _bulk_upsert(db: Session, rows: list[dict]):
     """
-    Bulk INSERT OR IGNORE into readings table.
-    Splits into UPSERT_BATCH_SIZE chunks to keep statement size sane.
-    Automatically selects SQLite or PostgreSQL dialect based on the connected DB.
+    Bulk INSERT OR IGNORE into readings table using raw SQL.
+    ON CONFLICT DO NOTHING works on both PostgreSQL and SQLite.
+    Datetime objects are serialized to ISO strings for cross-DB compatibility.
     """
-    from app.models.aqi import Reading
-
-    dialect = db.bind.dialect.name if db.bind else "sqlite"
-    table = Reading.__table__
-
+    stmt = text(
+        "INSERT INTO readings (station_id, datetime, parameter, unit, value) "
+        "VALUES (:station_id, :datetime, :parameter, :unit, :value) "
+        "ON CONFLICT (station_id, datetime, parameter) DO NOTHING"
+    )
     for i in range(0, len(rows), UPSERT_BATCH_SIZE):
         batch = rows[i : i + UPSERT_BATCH_SIZE]
-
-        if dialect == "sqlite":
-            stmt = sqlite_insert(table).values(batch).on_conflict_do_nothing(
-                index_elements=["station_id", "datetime", "parameter"]
-            )
-        elif dialect == "postgresql":
-            stmt = pg_insert(table).values(batch).on_conflict_do_nothing(
-                index_elements=["station_id", "datetime", "parameter"]
-            )
-        else:
-            # Fallback: simple insert, skip on conflict
-            stmt = sqlite_insert(table).values(batch).on_conflict_do_nothing(
-                index_elements=["station_id", "datetime", "parameter"]
-            )
-
-        db.execute(stmt)
+        # Serialize datetime for cross-DB compatibility
+        serialized = []
+        for row in batch:
+            row = dict(row)
+            if isinstance(row.get("datetime"), datetime):
+                row["datetime"] = row["datetime"].isoformat()
+            serialized.append(row)
+        db.execute(stmt, serialized)
     db.commit()
 
 
