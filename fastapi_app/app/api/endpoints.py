@@ -189,8 +189,17 @@ def get_aqi_history(
     Returns hourly-aggregated AQI history for a station.
     Aggregates raw 15-min readings into hourly means, then computes AQI per hour.
     Default: last 24 hours. Max: 1 year (8760 h).
+    Reference is the latest data timestamp in DB so old data still resolves correctly.
     """
-    since = datetime.utcnow() - timedelta(hours=hours)
+    latest_ts = db.execute(
+        text("SELECT MAX(datetime) FROM readings WHERE station_id = :sid"),
+        {"sid": station_id},
+    ).scalar()
+    if not latest_ts:
+        return []
+    if isinstance(latest_ts, str):
+        latest_ts = datetime.fromisoformat(latest_ts.replace('Z', '+00:00')[:19])
+    since = latest_ts - timedelta(hours=hours)
 
     rows = db.execute(
         text("""
@@ -202,37 +211,13 @@ def get_aqi_history(
             FROM readings
             WHERE station_id = :sid
               AND datetime >= :since
+            ORDER BY datetime
         """),
         {"sid": station_id, "since": since},
     ).fetchall()
 
     if not rows:
-        latest_ts = db.execute(
-            text("SELECT MAX(datetime) FROM readings WHERE station_id = :sid"),
-            {"sid": station_id},
-        ).scalar()
-        if not latest_ts:
-            return []
-        if isinstance(latest_ts, str):
-            latest_ts = datetime.fromisoformat(latest_ts.replace('Z', '+00:00'))
-        since_latest = latest_ts - timedelta(hours=hours)
-        rows = db.execute(
-            text("""
-                SELECT
-                    datetime,
-                    parameter,
-                    unit,
-                    value
-                FROM readings
-                WHERE station_id = :sid
-                  AND datetime >= :since
-                ORDER BY datetime
-                LIMIT 500
-            """),
-            {"sid": station_id, "since": since_latest},
-        ).fetchall()
-        if not rows:
-            return []
+        return []
 
     # Group by hour in Python to support all SQL dialects (SQLite, PostgreSQL, etc.)
     from collections import defaultdict
