@@ -183,6 +183,7 @@ def get_realtime_aqi(db: Session = Depends(get_db)):
 def get_aqi_history(
     station_id: int,
     hours: int = Query(default=24, ge=1, le=8760, description="Hours of history to return (max 8760 = 1 year)"),
+    window: str = Query(default=None, description="Shortcut: 24h, 3d, 7d, 30d (overrides hours)"),
     db: Session = Depends(get_db),
 ):
     """
@@ -191,6 +192,9 @@ def get_aqi_history(
     Default: last 24 hours. Max: 1 year (8760 h).
     Reference is the latest data timestamp in DB so old data still resolves correctly.
     """
+    if window:
+        window_map = {"24h": 24, "3d": 72, "7d": 168, "30d": 720}
+        hours = window_map.get(window.lower(), hours)
     latest_ts = db.execute(
         text("SELECT MAX(datetime) FROM readings WHERE station_id = :sid"),
         {"sid": station_id},
