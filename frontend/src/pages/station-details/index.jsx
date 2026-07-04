@@ -50,15 +50,15 @@ const StationDetails = () => {
       .finally(() => setHistoryLoading(false));
   }, [stationId, historyHours]);
 
-  // Fetch predictions when tab = trends
+  // Fetch predictions when tab or hours changes
   useEffect(() => {
     if (!stationId) return;
     setPredictionsLoading(true);
-    getPredictions(stationId)
+    getPredictions(stationId, historyHours)
       .then(setPredictions)
       .catch(() => setPredictions([]))
       .finally(() => setPredictionsLoading(false));
-  }, [stationId]);
+  }, [stationId, historyHours]);
 
   if (globalLoading) {
     return (
@@ -105,33 +105,30 @@ const StationDetails = () => {
     NO2: h.pollutants?.no2 ?? null,
   }));
 
-  // Merge predictions into history chart data (future extension)
-  const latestHistoryTs = history.length > 0
-    ? Math.max(...history.map(h => new Date(h.datetime).getTime()))
-    : Date.now();
+  // Build prediction lookup keyed by hour for matching with history
+  const predByHour = {};
+  predictions.forEach(p => {
+    const key = Math.round(new Date(p.prediction_time).getTime() / 3600000);
+    predByHour[key] = p.predicted_aqi;
+  });
 
-  // Only show predictions that extend beyond latest history point
-  const futurePreds = predictions
-    .filter(p => new Date(p.prediction_time).getTime() > latestHistoryTs)
-    .slice(0, 48);
+  // Merge predictions into history chart data: match by hour
+  const combinedChartData = historyChartData.map((h, i) => {
+    const histTs = new Date(history[i].datetime).getTime();
+    const hourKey = Math.round(histTs / 3600000);
+    return { ...h, 'Predicted AQI': predByHour[hourKey] ?? null };
+  });
 
-  const combinedChartData = [
-    ...historyChartData,
-    ...futurePreds.map(p => ({
-      time: formatDateTime(p.prediction_time),
-      AQI: null,
-      'Predicted AQI': p.predicted_aqi,
-    })),
-  ];
-
-  // Format predictions for chart (forecast tab)
-  const predChartData = predictions.slice(0, 48).map((p) => ({
+  // Format predictions for chart (forecast tab) — use newest 48
+  const sortedPreds = [...predictions].sort((a, b) => new Date(a.prediction_time) - new Date(b.prediction_time));
+  const latestPreds = sortedPreds.slice(-48);
+  const predChartData = latestPreds.map((p) => ({
     time: formatDateTime(p.prediction_time),
     'Predicted AQI': p.predicted_aqi,
   }));
 
-  // Merge actual + predicted for comparison (use history that overlaps with prediction window)
-  const comparisonData = predictions.slice(0, 48).map((p) => {
+  // Merge actual + predicted for comparison
+  const comparisonData = latestPreds.map((p) => {
     const match = history.find((h) => {
       const pHour = new Date(p.prediction_time).getTime();
       const hHour = new Date(h.datetime).getTime();

@@ -60,8 +60,8 @@ export const getAqiHistory = (stationId, hours = 24) =>
 // ---------------------------------------------------------------------------
 // Predictions
 // ---------------------------------------------------------------------------
-export const getPredictions = (stationId) =>
-  api.get(`/predictions/${stationId}`).then((r) => r.data);
+export const getPredictions = (stationId, hours) =>
+  api.get(`/predictions/${stationId}${hours ? `?hours=${hours}` : ''}`).then((r) => r.data);
 
 // ---------------------------------------------------------------------------
 // Auth

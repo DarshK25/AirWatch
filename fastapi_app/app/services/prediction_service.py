@@ -112,8 +112,9 @@ def generate_and_save_predictions(db: Session):
     
     new_predictions = []
     
-    # 2. Clear old predictions before inserting new ones
-    db.query(Prediction).delete()
+    # 2. Clear predictions older than 30 days before inserting new ones
+    cutoff = datetime.utcnow() - timedelta(days=30)
+    db.query(Prediction).filter(Prediction.prediction_time < cutoff).delete()
     
     # 3. Generate Predictions Iteratively (Autoregressive)
     for station_id in stations:

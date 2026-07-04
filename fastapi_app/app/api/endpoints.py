@@ -289,14 +289,15 @@ def get_aqi_history(
 # ---------------------------------------------------------------------------
 
 @router.get("/predictions/{station_id}", response_model=List[PredictionSchema], tags=["AQI Data"])
-def get_predictions(station_id: int, db: Session = Depends(get_db)):
-    """48-hour AQI forecast for a station. Returns cached predictions or fallback data."""
-    predictions = (
-        db.query(Prediction)
-        .filter(Prediction.station_id == station_id, Prediction.prediction_time >= datetime.utcnow())
-        .order_by(Prediction.prediction_time)
-        .all()
-    )
+def get_predictions(station_id: int, hours: Optional[int] = None, db: Session = Depends(get_db)):
+    """48-hour AQI forecast for a station. Returns cached predictions or fallback data.
+    If hours is provided, returns predictions within that past window too."""
+    query = db.query(Prediction).filter(Prediction.station_id == station_id)
+    if hours is not None:
+        query = query.filter(Prediction.prediction_time >= datetime.utcnow() - timedelta(hours=hours))
+    else:
+        query = query.filter(Prediction.prediction_time >= datetime.utcnow())
+    predictions = query.order_by(Prediction.prediction_time).all()
 
     if predictions:
         return [
