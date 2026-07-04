@@ -207,7 +207,14 @@ def get_aqi_history(
     ).fetchall()
 
     if not rows:
-        latest = db.execute(
+        latest_ts = db.execute(
+            text("SELECT MAX(datetime) FROM readings WHERE station_id = :sid"),
+            {"sid": station_id},
+        ).scalar()
+        if not latest_ts:
+            return []
+        since_latest = latest_ts - timedelta(hours=hours)
+        rows = db.execute(
             text("""
                 SELECT
                     datetime,
@@ -216,14 +223,14 @@ def get_aqi_history(
                     value
                 FROM readings
                 WHERE station_id = :sid
-                ORDER BY datetime DESC
+                  AND datetime >= :since
+                ORDER BY datetime
                 LIMIT 500
             """),
-            {"sid": station_id},
+            {"sid": station_id, "since": since_latest},
         ).fetchall()
-        if not latest:
+        if not rows:
             return []
-        rows = latest
 
     # Group by hour in Python to support all SQL dialects (SQLite, PostgreSQL, etc.)
     from collections import defaultdict
