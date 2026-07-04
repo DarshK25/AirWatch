@@ -25,6 +25,7 @@ import requests
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 logger = logging.getLogger(__name__)
 
@@ -190,15 +191,30 @@ def _bulk_upsert(db: Session, rows: list[dict]):
     """
     Bulk INSERT OR IGNORE into readings table.
     Splits into UPSERT_BATCH_SIZE chunks to keep statement size sane.
+    Automatically selects SQLite or PostgreSQL dialect based on the connected DB.
     """
     from app.models.aqi import Reading
 
+    dialect = db.bind.dialect.name if db.bind else "sqlite"
     table = Reading.__table__
+
     for i in range(0, len(rows), UPSERT_BATCH_SIZE):
         batch = rows[i : i + UPSERT_BATCH_SIZE]
-        stmt  = sqlite_insert(table).values(batch).on_conflict_do_nothing(
-            index_elements=["station_id", "datetime", "parameter"]
-        )
+
+        if dialect == "sqlite":
+            stmt = sqlite_insert(table).values(batch).on_conflict_do_nothing(
+                index_elements=["station_id", "datetime", "parameter"]
+            )
+        elif dialect == "postgresql":
+            stmt = pg_insert(table).values(batch).on_conflict_do_nothing(
+                index_elements=["station_id", "datetime", "parameter"]
+            )
+        else:
+            # Fallback: simple insert, skip on conflict
+            stmt = sqlite_insert(table).values(batch).on_conflict_do_nothing(
+                index_elements=["station_id", "datetime", "parameter"]
+            )
+
         db.execute(stmt)
     db.commit()
 
